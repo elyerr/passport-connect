@@ -34,8 +34,10 @@
                 </div>
                 <div class="mt-5">
                     @if (isset($code) && $code == 401)
-                        <form action="/redirect" method="GET">
-                            <button type="submit" class="btn btn-primary">Login With Server</button>
+                        <form action="/login" method="GET">
+                            <button type="submit" class="btn btn-primary">
+                                Generar nuevas credenciales
+                            </button>
                         </form>
                     @endif
                 </div>
@@ -43,5 +45,4 @@
         </div>
     </div>
 </body>
-
 </html>
