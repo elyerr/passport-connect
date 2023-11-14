@@ -129,7 +129,7 @@ class CodeController extends Controller
             new ReportError("La session no ha sido encontrada", 400)
         );
 
-        $response_guzzle = $this->http
+        $response_guzzle = $this->passportConnect->http
             ->post(env('SERVER') . '/api/oauth/token', [
                 'form_params' => [
                     'grant_type' => 'authorization_code',
