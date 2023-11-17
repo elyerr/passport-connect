@@ -160,10 +160,12 @@ class PassportConnect
      * @param String $name
      * @param String $value
      * @param Int $timeExpires
+     * @param Boolean $http_only
      * @return \Symfony\Component\HttpFoundation\Cookie
      */
-    public function storeCookie($name, $value, $timeExpires)
+    public function storeCookie($name, $value, $timeExpires, $http_only = true)
     {
+
         return Cookie(
             $name,
             $value,
@@ -171,7 +173,7 @@ class PassportConnect
             $this->env()->cookie->path,
             $this->env()->cookie->domain,
             $this->env()->cookie->secure,
-            $this->env()->cookie->http_only,
+            $http_only,
             false,
             $this->env()->cookie->same_site,
         );
@@ -189,17 +191,31 @@ class PassportConnect
 
         if (is_array($cookies)) {
             foreach ($cookies as $cookie) {
-                $response->withCookie($this->duplicate(
-                    $cookie,
-                    $this->encrypter->encrypt(
-                        CookieValuePrefix::create($cookie->getName(),
-                            $this->encrypter->getKey()) . $cookie->getValue(),
-                        EncryptCookies::serialized($cookie->getName())
-                    )
-                ));
+                if ($cookie->getName() != $this->jwt_token) {
+                    $response->withCookie($this->duplicate(
+                        $cookie,
+                        $this->encrypter->encrypt(
+                            CookieValuePrefix::create($cookie->getName(),
+                                $this->encrypter->getKey()) . $cookie->getValue(),
+                            EncryptCookies::serialized($cookie->getName())
+                        )
+                    ));
+                } else {
+                    $response->withCookie($this->storeCookie(
+                                $cookie->getName(), 
+                                $cookie->getValue(),
+                                $cookie->getExpiresTime(), false
+                            ));
+                }
             }
 
             return $response;
+        }
+        /**
+         * cuando no es un array de cookies
+         */
+        if ($cookies->getName() == $this->jwt_token) {
+            return $response->withCookie($cookies);
         }
 
         $response->withCookie($this->duplicate(
@@ -210,7 +226,6 @@ class PassportConnect
                 EncryptCookies::serialized($cookies->getName())
             )
         ));
-
         return $response->sendHeaders();
     }
 
@@ -240,8 +255,13 @@ class PassportConnect
     {
         $token = $this->jwtToken($request);
 
-        return $request->cookie($this->jwt_token) ?
+        $authorization = $token?
         "Bearer " . $token : $request->header('Authorization');
+
+        return [
+            'Authorization' => $authorization,
+            'X-Verify-Transaction' => $this->xcrsRefresh($request),
+        ];
     }
 
     /**
