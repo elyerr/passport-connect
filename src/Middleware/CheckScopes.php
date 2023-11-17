@@ -3,11 +3,10 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use GuzzleHttp\Client;
+use Elyerr\Passport\Connect\Models\PassportConnect;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Exception\RequestException;
-use Elyerr\Passport\Connect\Models\PassportConnect;
 
 class CheckScopes extends PassportConnect
 {
@@ -20,16 +19,14 @@ class CheckScopes extends PassportConnect
      */
     public function handle(Request $request, Closure $next, $scopes)
     {
-        $authorization = $this->credentials($request);
-        
+        $credentials = $this->credentials($request);
+        $credentials['Scopes'] = $scopes;
+
         try {
             $response = $this->http
                 ->get($this->env()->server . '/api/gateway/check-scopes', [
-                'headers' => [
-                    'Authorization' => $authorization,
-                    'Scopes' => $scopes,
-                ],
-            ]);
+                    'headers' => $credentials,
+                ]);
 
             if ($response->getStatusCode() == 200) {
                 return $next($request);

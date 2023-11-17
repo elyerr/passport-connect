@@ -19,15 +19,13 @@ class CheckForAnyScope extends PassportConnect
      */
     public function handle(Request $request, Closure $next, $scopes)
     {
-        $authorization = $this->credentials($request);
+        $credentials = $this->credentials($request);
+        $credentials['Scopes'] = $scopes;
  
         try {
             $response = $this->http
                 ->request('GET', $this->env()->server . '/api/gateway/check-scope', [
-                'headers' => [
-                    'Authorization' => $authorization,
-                    'Scopes' => $scopes,
-                ],
+                'headers' => $credentials,
             ]);
 
             if ($response->getStatusCode() == 200) {

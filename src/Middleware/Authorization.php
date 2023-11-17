@@ -4,6 +4,7 @@ namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
 use Elyerr\Passport\Connect\Models\PassportConnect;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\RequestException;
 
 class Authorization extends PassportConnect
@@ -11,14 +12,12 @@ class Authorization extends PassportConnect
 
     public function handle($request, Closure $next)
     {
-        $authorization = $this->credentials($request);
+        $credentials = $this->credentials($request);
 
         try {
             $response = $this->http
                 ->request('GET', $this->env()->server . '/api/gateway/check-authentication', [
-                    'headers' => [
-                        'Authorization' => $authorization,
-                    ],
+                    'headers' => $credentials
                 ]);
 
             $this->report($response);
