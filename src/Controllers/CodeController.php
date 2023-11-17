@@ -6,7 +6,7 @@ use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
 use Elyerr\Passport\Connect\Models\Session;
 use Elyerr\Passport\Connect\Traits\Config;
-use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
@@ -128,26 +128,32 @@ class CodeController extends Controller
             strlen($state) > 0 && $state === $transport_state,
             new ReportError("La session no ha sido encontrada", 400)
         );
+        try {
 
-        $response_guzzle = $this->passportConnect->http
-            ->post(env('SERVER') . '/api/oauth/token', [
-                'form_params' => [
-                    'grant_type' => 'authorization_code',
-                    'client_id' => $client_id,
-                    'redirect_uri' => env('APP_URL') . '/callback',
-                    'code_verifier' => $codeVerifier,
-                    'code' => $request->code,
-                ],
-                'headers' => [
-                    'X-CSRF-TOKEN' => $csrf,
-                ],
-            ]);
+            $response_guzzle = $this->passportConnect->http
+                ->post(env('SERVER') . '/api/oauth/token', [
+                    'form_params' => [
+                        'grant_type' => 'authorization_code',
+                        'client_id' => $client_id,
+                        'redirect_uri' => env('APP_URL') . '/callback',
+                        'code_verifier' => $codeVerifier,
+                        'code' => $request->code,
+                    ],
+                    'headers' => [
+                        'X-CSRF-TOKEN' => $csrf,
+                    ],
+                ]);
+        } catch (ClientException $e) {
+            throw new ReportError("El servidor rechazo la conexion", 401);
+
+        }
 
         // Obtener los valores del encabezado y el cuerpo de la respuesta
         $x_csrf_refresh = $response_guzzle->getHeader('X-CSRF-REFRESH')[0];
         $body = $response_guzzle->getBody()->getContents();
         $responseData = json_decode($body, true);
-        $access_token = $responseData['access_token'];
+
+        $access_token = $responseData['token_type'] . " " . $responseData['access_token'];
         $refresh_token = $responseData['refresh_token'];
         $expires_in = $responseData['expires_in'];
 
