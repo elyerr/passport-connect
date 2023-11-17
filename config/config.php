@@ -16,10 +16,10 @@ return [
      * lo genera el servidor de autorizacion, esta clave solo sera necesario cuando el cliente es
      * publico
      */
-    'server_id' => env('SERVER_ID')? : null,
- 
+    'server_id' => env('SERVER_ID') ?: null,
+
     /**
-     * Variable donde se manejara las credenciales de los usuarios, estas variables 
+     * Variable donde se manejara las credenciales de los usuarios, estas variables
      * no es necesario cambiarlas, pero si lo haces todas deben tener un nombre distinto
      */
     'ids' => [
@@ -31,14 +31,14 @@ return [
     ],
 
     /**
-     * ruta donde estara ubicado el login en tu aplicacion, eres libre de modificarlo 
+     * ruta donde estara ubicado el login en tu aplicacion, eres libre de modificarlo
      * dependiendo de la configuracion de tu microservicio
      */
     'login' => '/login',
 
     /**
      * Pagina a donde debe ser redireccionado luego que se hayan
-     * genereado las credenciales en el la ruta /callback , debes ajustar el valor 
+     * genereado las credenciales en el la ruta /callback , debes ajustar el valor
      * a dependiendo de la configuracion de tu microservicio
      */
     'redirect_after_login' => '/',
@@ -58,7 +58,7 @@ return [
         'domain' => config('session.domain') ?: 'localhost',
         'time_expires' => 10,
         'secure' => isset($_SERVER['HTTPS']) ? true : false,
-        'http_only' => isset($_SERVER['HTTPS']) ? false : true,
+        'http_only' => true,
         'same_site' => 'lax',
     ],
 
@@ -73,4 +73,5 @@ return [
         'port' => env('REDIS_PORT') ?: '6379',
         'prefix' => 'passport',
     ],
+
 ];
