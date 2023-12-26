@@ -3,13 +3,13 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
+use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
-use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 
 class Authorization extends PassportConnect
 {
-
     public function handle($request, Closure $next)
     {
         $credentials = $this->credentials($request);
@@ -17,7 +17,7 @@ class Authorization extends PassportConnect
         try {
             $response = $this->http
                 ->request('GET', $this->env()->server . '/api/gateway/check-authentication', [
-                    'headers' => $credentials
+                    'headers' => $credentials,
                 ]);
 
             $this->report($response);
@@ -27,7 +27,11 @@ class Authorization extends PassportConnect
             }
         } catch (RequestException $e) {
             if ($e->getResponse()->getStatusCode() == 401) {
-                return $this->isNotAuthenticable($request, $e->getResponse());
+                try {
+                    return $this->isNotAuthenticable($request, $e->getResponse());
+                } catch (ServerException $e) {
+                    throw new ReportError("Can't update credentials", 401);
+                }
             }
         }
     }

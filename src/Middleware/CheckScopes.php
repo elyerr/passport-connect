@@ -3,8 +3,10 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
+use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
 use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -36,7 +38,11 @@ class CheckScopes extends PassportConnect
 
         } catch (RequestException $e) {
             if ($e->hasResponse() && $e->getResponse()->getStatusCode() == 401) {
-                return $this->isNotAuthenticable($request, $e->getResponse());
+                try {
+                    return $this->isNotAuthenticable($request, $e->getResponse());
+                } catch (ServerException $e) {
+                    throw new ReportError("Can't update credentials", 401);
+                }
             }
         }
     }

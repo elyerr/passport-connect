@@ -3,10 +3,11 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use Elyerr\Passport\Connect\Models\PassportConnect;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Elyerr\Passport\Connect\Models\PassportConnect;
 
 class CheckClientCredentials extends PassportConnect
 {
@@ -14,7 +15,7 @@ class CheckClientCredentials extends PassportConnect
     {
         $credentials = $this->credentials($request);
         $credentials['Scopes'] = $scopes;
- 
+
         try {
             $response = $this->http
                 ->request('GET', $this->env()->server . '/api/gateway/check-client-credentials', [
@@ -29,7 +30,12 @@ class CheckClientCredentials extends PassportConnect
 
         } catch (RequestException $e) {
             if ($e->hasResponse() && $e->getResponse()->getStatusCode() == 401) {
-                return $this->isNotAuthenticable($request, $e->getResponse());
+                try {
+                    return $this->isNotAuthenticable($request, $e->getResponse());
+                } catch (ServerException $e) {
+                    throw new ReportError("Can't update credentials", 401);
+                }
+
             }
         }
     }

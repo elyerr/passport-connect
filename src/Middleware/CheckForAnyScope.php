@@ -3,9 +3,10 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
+use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
 
 class CheckForAnyScope extends PassportConnect
@@ -21,12 +22,12 @@ class CheckForAnyScope extends PassportConnect
     {
         $credentials = $this->credentials($request);
         $credentials['Scopes'] = $scopes;
- 
+
         try {
             $response = $this->http
                 ->request('GET', $this->env()->server . '/api/gateway/check-scope', [
-                'headers' => $credentials,
-            ]);
+                    'headers' => $credentials,
+                ]);
 
             if ($response->getStatusCode() == 200) {
                 return $next($request);
@@ -36,7 +37,12 @@ class CheckForAnyScope extends PassportConnect
 
         } catch (RequestException $e) {
             if ($e->hasResponse() && $e->getResponse()->getStatusCode() == 401) {
-                return $this->isNotAuthenticable($request, $e->getResponse());
+                try {
+                    return $this->isNotAuthenticable($request, $e->getResponse());
+                } catch (ServerException $e) {
+                    throw new ReportError("Can't update credentials", 401);
+                }
+
             }
         }
     }
