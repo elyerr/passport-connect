@@ -57,7 +57,7 @@ class CodeController extends Controller
      * @param Request $request
      */
     public function redirect(Request $request)
-    {
+    {    
         /**
          * creamos una session
          */
@@ -78,15 +78,17 @@ class CodeController extends Controller
 
         // Crear la URL con los parámetros para la solicitud
         $query = http_build_query([
-            'client_id' => env('SERVER_ID'),
-            'redirect_uri' => env('APP_URL') . '/callback',
+            'client_id' => $this->env()->server_id,
+            'redirect_uri' => $this->env()->host . '/callback',
             'response_type' => 'code',
             'state' => $state,
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
+            'prompt' => $this->env()->prompt_mode,
+            'scope' => implode(' ', $this->env()->scopes)
         ]);
 
-        header('Location: ' . env('SERVER') . '/grant-access?' . $query);
+        header('Location: ' . $this->env()->server . '/oauth/authorize?' . $query);
         exit;
 
     }
@@ -99,26 +101,7 @@ class CodeController extends Controller
      */
     public function callback(Request $request)
     {
-        /**
-         * get paramas
-         */
-        $data = explode('?', $request->state);
-
-        /**
-         * csrf token enviado desde el cliente
-         */
-        $transport_state = $data[0];
-
-        /**
-         * identificador unico del cliente
-         */
-        $client_id = str_replace('id=', '', $data[1]);
-
-        /**
-         * token temporal valido por 10 Segundos despues de ese tiempo
-         * la peticion va ser invalida
-         */
-        $csrf = str_replace('csrf=', '', $data[2]);
+        $transport_state = $request->state;        
 
         $state = $this->session->getKey($request, 'state');
 
@@ -131,25 +114,21 @@ class CodeController extends Controller
         try {
 
             $response_guzzle = $this->passportConnect->http
-                ->post(env('SERVER') . '/api/oauth/token', [
+                ->post( $this->env()->server . '/api/oauth/token', [
                     'form_params' => [
                         'grant_type' => 'authorization_code',
-                        'client_id' => $client_id,
-                        'redirect_uri' => env('APP_URL') . '/callback',
+                        'client_id' => $this->env()->server_id,
+                        'redirect_uri' => $this->env()->host . '/callback',
                         'code_verifier' => $codeVerifier,
                         'code' => $request->code,
-                    ],
-                    'headers' => [
-                        'X-CSRF-TOKEN' => $csrf,
-                    ],
+                    ], 
                 ]);
         } catch (ClientException $e) {
             throw new ReportError("El servidor rechazo la conexion", 401);
 
         }
 
-        // Obtener los valores del encabezado y el cuerpo de la respuesta
-        $x_csrf_refresh = $response_guzzle->getHeader('X-CSRF-REFRESH')[0];
+        // Obtener los valores del encabezado y el cuerpo de la respuesta 
         $body = $response_guzzle->getBody()->getContents();
         $responseData = json_decode($body, true);
 
@@ -161,14 +140,13 @@ class CodeController extends Controller
         $cookies = [
             $this->passportConnect->storeCookie($this->passportConnect->jwt_token, $access_token, ($expires_in / 60)),
             $this->passportConnect->storeCookie($this->passportConnect->jwt_refresh, $refresh_token, (30 * 24 * 60)),
-            $this->passportConnect->storeCookie($this->passportConnect->csrf_refresh, $x_csrf_refresh, (30 * 24 * 60)),
         ];
+
         $response = $this->passportConnect->encrypt($cookies);
 
         $response->headers->set('Location', $this->env()->redirect_after_login);
         $response->setStatusCode(Response::HTTP_FOUND);
         return $response->send();
-
     }
 
 }
