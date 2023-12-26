@@ -34,6 +34,7 @@ class Session
             'scheme' => $this->env()->redis->schema,
             'host' => $this->env()->redis->host,
             'port' => $this->env()->redis->port,
+            'databse' => $this->env()->redis->database
         ]);
     }
 
