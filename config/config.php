@@ -5,18 +5,39 @@ use Illuminate\Support\Str;
 return [
 
     /**
+     * DNS o URL actual del servidor
+     */
+    'host' => env('APP_URL')?:'localhost',
+
+    /**
      * Variable que determina la ubicacion principal del servidor de authorizacion
      * esta variable de entorno si tienes laravel puedes configurarlo en el archivo env
      * en caso contrario puedes remplazar su contenido con la url del servidor
      */
-    'server' => env('SERVER') ?: 'localhost',
-
+    'server' => env('SERVER') ?: 'localhost:8080',
+    
     /**
      * Indentificador del server id del microservicio que se le asigno, este ID
      * lo genera el servidor de autorizacion, esta clave solo sera necesario cuando el cliente es
      * publico
      */
     'server_id' => env('SERVER_ID') ?: null,
+
+    /**
+     * formas para pedir authorizacion, son tres formas aplicables
+     * none : modo desatendido, empleado cuando la palicacion no representan ningun riesgo
+     * consent: solicitara al usuario que intervenga para que otrogue la autorrizacion
+     * login: modo seguro, utilizado cuando la aplicacion a conectar contiene servicios confidenciales
+     * por ejemplo cuando el servicio necesita actualizar informacion de usuarios, solicitara que 
+     * el usuario ingrese otra vez sus credenciales para que pueda realizar estas acciones
+     * 
+     */
+    'prompt_mode' => env('PROMPT_MODE','consent')?:'login',
+
+    /**
+     * scopes o permisos para que los usuarios puedan accceder a las caracteristicas del cliente
+     */
+    'scopes' => [],
 
     /**
      * Variable donde se manejara las credenciales de los usuarios, estas variables
@@ -27,7 +48,6 @@ return [
         'server_key' => Str::slug(env('APP_NAME', 'passport'), '_') . '__key_outh2_server',
         'jwt_token' => Str::slug(env('APP_NAME', 'passport'), '_') . '_outh2_server',
         'jwt_refresh' => Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_outh2_server',
-        'csrf_refresh' => Str::slug(env('APP_NAME', 'passport'), '_') . '_csrf_refresh_outh2_server',
     ],
 
     /**
@@ -71,6 +91,7 @@ return [
         'schema' => 'tcp',
         'host' => env('REDIS_HOST') ?: '127.0.0.1',
         'port' => env('REDIS_PORT') ?: '6379',
+        'database' => 1,
         'prefix' => 'passport',
     ],
 
