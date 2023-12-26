@@ -58,3 +58,25 @@ Clases encargadas de interceptar las peticiones y actuar con base en las credenc
 - **CheckScopes**: funciona igual al anterior pero este verificara que todos los scopes estén precentes para poder dejar pasar la petición.
 
 El middleware 2,3 y 4 deben ser usados con el primer middleware para su correcto funcionamiento, si bien el primero no requiere de los demás  necesariamente requieren del primero.
+
+
+# TRAIT
+El paquete implemente un trait , el cual contiene una funcion **userCan** , que puede ser usado para verificar si un usuario tiene permisos con un scopes especifico.
+
+Se debe importar la siguiente denominacion
+```
+use Elyerr\Passport\Connect\Traits\Passport;
+```
+
+Se debe agregar a la clase
+```
+class Test {
+
+    use Passport;
+
+    public function __construct(){
+        //puedes acceder a ella de la siguiente manera pasandole el nombre del escope
+        $variable = $this->userCan('test');
+    }
+}
+```
