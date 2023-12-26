@@ -18,6 +18,10 @@ final class ServiceProvider extends Provider implements DeferrableProvider
         $this->commands([
             ClientConsole::class,
         ]);
+
+        $this->publishes([
+            __DIR__ .'/../config/config.php' => config_path('passport_connect.php')
+        ],'passport_connect');
     }
 
     /**
@@ -27,7 +31,7 @@ final class ServiceProvider extends Provider implements DeferrableProvider
      */
     public function register()
     {
-
+        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'passport_connect');
     }
 
     /**
