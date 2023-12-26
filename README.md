@@ -1,4 +1,4 @@
-# Passport Connect (Testing)
+# Passport Connect
 Permite conectar fácilmente cualquier micro-servicio al servidor principal, este plugin funciona solo con el servidor de autorización [outh2-passport-server](https://gitlab.com/elyerr/outh2-passport-server)
 
 ### Dependencias
