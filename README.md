@@ -61,7 +61,7 @@ El middleware 2,3 y 4 deben ser usados con el primer middleware para su correcto
 
 
 # TRAIT
-El paquete implemente un trait , el cual contiene una funcion **userCan** , que puede ser usado para verificar si un usuario tiene permisos con un scopes especifico.
+El paquete implemente un trait , el cual contiene una funcion **userCan** y **user** , que puede ser usado para verificar si un usuario tiene permisos con un scopes especifico o mostrar los datos del usuario autenticado.
 
 Se debe importar la siguiente denominacion
 ```
@@ -77,6 +77,7 @@ class Test {
     public function __construct(){
         //puedes acceder a ella de la siguiente manera pasandole el nombre del escope
         $variable = $this->userCan('test');
+        $user = $this->user();
     }
 }
 ```
