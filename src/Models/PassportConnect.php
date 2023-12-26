@@ -2,17 +2,17 @@
 
 namespace Elyerr\Passport\Connect\Models;
 
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Contracts\Encryption\Encrypter;
-use Illuminate\Cookie\CookieValuePrefix;
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Cookie\CookieValuePrefix;
+use GuzzleHttp\Exception\ClientException;
+use Elyerr\Passport\Connect\Traits\Config;
 use Symfony\Component\HttpFoundation\Cookie;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class PassportConnect
 {
@@ -28,13 +28,7 @@ class PassportConnect
      * @var String
      */
     public $server_key;
-
-    /**
-     * token temporal para realizar peticiones con el grant_type refresh_token
-     * @var String
-     */
-    public $csrf_refresh;
-
+ 
     /**
      * Token jwt propocionado por el servidor principal
      * @var String
@@ -68,21 +62,9 @@ class PassportConnect
         $this->server_id = $this->env()->ids->server_id;
         $this->server_key = $this->env()->ids->server_key;
         $this->jwt_token = $this->env()->ids->jwt_token;
-        $this->jwt_refresh = $this->env()->ids->jwt_refresh;
-        $this->csrf_refresh = $this->env()->ids->csrf_refresh;
+        $this->jwt_refresh = $this->env()->ids->jwt_refresh; 
 
-    }
-
-    /**
-     * recupera el valor la cookie del token temporal que sera usado con el refresh_token
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return String
-     */
-    public function xcrsRefresh(Request $request)
-    {
-        return $this->getCookie($request, $this->csrf_refresh);
-    }
+    } 
 
     /**
      * recupera el token jwt generado por el servidor
@@ -139,19 +121,20 @@ class PassportConnect
      */
     public function getCookie(Request $request, $name)
     {
-        foreach ($request->cookies as $key => $value) {
+        if ($request->hasCookie($name)) {
+            $value = $request->cookie($name);
             try {
-                if ($key === $name) {
-                    return CookieValuePrefix::remove(
-                        $this->encrypter->decrypt(
-                            $value,
-                            EncryptCookies::serialized($name))
-                    );
-                }
+                return CookieValuePrefix::remove(
+                    $this->encrypter->decrypt(
+                        $value,
+                        EncryptCookies::serialized($name)
+                    )
+                );
             } catch (DecryptException $e) {
                 return $value;
             }
         }
+        return null;
     }
 
     /**
@@ -202,10 +185,10 @@ class PassportConnect
                     ));
                 } else {
                     $response->withCookie($this->storeCookie(
-                                $cookie->getName(), 
-                                $cookie->getValue(),
-                                $cookie->getExpiresTime(), false
-                            ));
+                        $cookie->getName(),
+                        $cookie->getValue(),
+                        $cookie->getExpiresTime(), false
+                    ));
                 }
             }
 
@@ -255,12 +238,8 @@ class PassportConnect
     {
         $token = $this->jwtToken($request);
 
-        $authorization = $token?
-        "Bearer " . $token : $request->header('Authorization');
-
         return [
-            'Authorization' => $authorization,
-            'X-Verify-Transaction' => $this->xcrsRefresh($request),
+            'Authorization' => $token ? "Bearer " . $token : $request->header('Authorization'),
         ];
     }
 
@@ -294,7 +273,7 @@ class PassportConnect
             'refresh_token' => $this->jwtRefresh($request),
             'client_id' => $this->serverId($request),
         ];
-
+         
         if ($this->serverKey($request)) {
             $form['client_secret'] = $this->serverKey($request);
         }
@@ -303,10 +282,7 @@ class PassportConnect
 
             $response_guzzle = $this->http
                 ->request('POST', $this->env()->server . '/api/oauth/token', [
-                    'form_params' => $form,
-                    'headers' => [
-                        'X-CSRF-REFRESH' => $this->xcrsRefresh($request),
-                    ],
+                    'form_params' => $form
                 ]);
 
         } catch (ClientException $e) {
@@ -318,7 +294,6 @@ class PassportConnect
         $cookies = [
             $this->storeCookie($this->jwt_token, json_decode($response_guzzle->getBody(), true)['access_token'], ($expires_in / 60)),
             $this->storeCookie($this->jwt_refresh, json_decode($response_guzzle->getBody(), true)['refresh_token'], (100 * 24 * 60)),
-            $this->storeCookie($this->csrf_refresh, $response_guzzle->getHeader('X-CSRF-REFRESH')[0], (100 * 24 * 60)),
         ];
 
         return $cookies;
