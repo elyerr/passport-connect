@@ -5,7 +5,8 @@ use Illuminate\Support\Str;
 return [
 
     /**
-     * DNS o URL actual del servidor
+     * DNS o URL actual del microservicio que se esta desarollando
+     * por ejemplo :  http://clients.dominio.dom
      */
     'host' => env('APP_URL')?:'localhost',
 
@@ -13,6 +14,7 @@ return [
      * Variable que determina la ubicacion principal del servidor de authorizacion
      * esta variable de entorno si tienes laravel puedes configurarlo en el archivo env
      * en caso contrario puedes remplazar su contenido con la url del servidor
+     * por ejemplo : http://aouth2.dominio.dom
      */
     'server' => env('SERVER') ?: 'localhost:8080',
     
@@ -65,7 +67,8 @@ return [
 
     /**
      * Nombre de la Cookies donde se almacenara las el id de la session
-     * que se utilizara para poder recuperarla en cualquier momento
+     * que se utilizara para poder recuperarla en cualquier momento por 
+     * defecto toma el nombre de la aplicacion. es remondable no modificar
      */
     'session' => Str::slug(env('APP_NAME') ?: 'passport', '_') . '_connect_outh2_server',
 
