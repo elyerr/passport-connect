@@ -1,43 +1,59 @@
-## Passport Connect (Testing)
+# Passport Connect (Testing)
 Permite connectar facilmente cualquier culquier microservicio al servidor principal, este plugin funciona solo con el servidor de authorizacion [outh2-passport-server](https://gitlab.com/elyerr/outh2-passport-server)
 
 ### Dependencias
-- [Redis](https://redis.io/),  Redis es un motor de base de datos en memoria, necesario para gestionar las sessiones con el servidor de authorizacion, independientemente del sistema de session que este usando tu microservicio, deberas instalarlo en tu servidor al ser de codigo abierto no implicara pagos adicionales por su uso. 
+[Redis](https://redis.io/),  Redis es un motor de base de datos en memoria, necesario para gestionar las sessiones con el servidor de authorizacion, independientemente del sistema de session que este usando tu microservicio, deberas instalarlo en tu servidor al ser de codigo abierto no implicara pagos adicionales por su uso. 
 
-## Advertencias
-- Si estas usando laravel o cualquier otro framework que encripte las cookies de forma automatica, deveras evitar que vuelva a encriptar las cookies, para eso tienes dos opciones
-  - desabilitar la funcion en el framework de encriptado automatico, ya que las sesiones las administrara este plugin es a travez de redis por lo que es es inecesario ya que el paquete encripta las cookies que usa en la session de forma automaticatica.
-  - la otra opcion que tendras, es agregar las cookies a la excepcion para que no las encripte para eso deberas hacer uso del trait `config` e importar la denominacion  `Elyerr\Passport\Connect\Traits\Config` dentro de la clase que se encargue del encriptado y deberas agregar estas llaves a la excepcion 
-    ```
-        /**
-         * devuelve los nombre de las cookies que generara para la session
-         * 
-         * @return Array
-         */
-        public function cookies()
-            {
-                return [
-                    $this->env()->ids->server_id,
-                    $this->env()->ids->server_key,
-                    $this->env()->ids->jwt_token,
-                    $this->env()->ids->jwt_refresh,
-                    $this->env()->ids->csrf_refresh
-                    ];
-            }
-    ```
+## CONFIGURACION
 
-## Configuracion
-Antes luego de instalar el paquete deberas configurar las llaves necesarias en el archivo config del plugin, puedes ajustar los valores dependiendo de la configuracion de tu servidor.
+### PUBLICAR CONFIGURACION
+```
+php artisan vendor:publish --tag=passport_connect
+```
 
-#### Rutas
-  - `CodeController` : controlador que administra la gestion de un usuario publico, deberas generarle una uri en tu proyecto para su correcto funcionamiento.
-  - Esquema
-    - `/login` : muestra una vista para generar la sesion
-    - `/redirect` : Redirecciona al servidor de autorizacion para solicitar permiso
-    - `/callback` : Ruta que generara las credenciales necesarias para la coneccion con el sever.
+### CREAR CLIENTE PUBLICO
+- este se debe hacer a traves de la terminar dentro del servidor de aouth2 ejecutando el siguiente comando
+```
+php artisan passport:client --public
+```
+El comando realizara tres preguntas antes de generar un id del cliente
+- en la primera pegrunta puedes ingresar un numero cualquiera que no debe repetirse con otros clientes ya existentes. por ejemplo 100
+- en la segunda pregunta deberas asignar un nombre al cliente puedes agregar el nombre de tu app para que tenga relacion por ejemplo "users"
+- en el tercer argumento deberas agregar un el dominion de su microservicio agregando la ruta **callback** por ejemplo **http://users.dominio.dom/callback**, al final de esto te entgregará un valor uuid parecido a este `9af032fb-e984-4d0a-a6b8-bebabf129c14` que deberas asignar en la configuracion de passport-connect en la llave **server_id**
 
-#### Middleware
-clases encargadas de interceptar las petciones y actuar en base a las credenciales del usaurio, estas, son las encargadas de crear el puente con el sistema de autorizacion para porporcionarte acceso al sistema.
+
+#### DESHABILITAR ENCRYPTADO PARA LAS COOKIES 
+en laravel deberas agregar el contructor dentro del middleware **EncryptCookies** e importar la siguiente denominación, con esto evitaras que encripte las cookies que genera el paquete
+  
+```
+use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;
+```
+
+- Constructor de la clase
+```
+public function __construct(EncrypterContract $encrypter)
+    {   
+        parent::__construct($encrypter);
+        
+        $except = [
+            config('passport_connect.ids.server_id'),
+            config('passport_connect.ids.server_key'),
+            config('passport_connect.ids.jwt_token'),
+            config('passport_connect.ids.jwt_refresh'),
+        ];
+
+        $this->except = array_merge($this->except, $except);
+    }
+```
+
+### GENEREAR RUTAS DE CREDENCIALES
+Recuerda que antes de poder usar las rutas deberas configurar las rutast todo lo necesario en el archivo **passport-connect.php** en la carpeta **config** de laravel
+```
+php artisan passport-connect:client-public
+```
+
+## MIDDLWARES
+clases encargadas de interceptar las petciones y actuar en base a las credenciales del usaurio, son las encargadas de crear el puente con el sistema de autorizacion para porporcionarte acceso al sistema.
 
 - **Authorization**: se encarga de verificar si el token jwt es correcto y tambien se encarga de generar nuevas credenciales cuando estas vencen, simpre que los datos sen validos. este middlware debe usarse para porteger todas las rutas del microservicion que requiera una authorizacion minima, esta debe ser usada sola o en conjunto con los demas middleware.
 - **CheckClientCredentials**: el funcionamiento de este middlware comprueba si un cliente pertenece al gran_type client_credentials.
