@@ -2,17 +2,17 @@
 
 namespace Elyerr\Passport\Connect\Models;
 
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use Illuminate\Contracts\Encryption\DecryptException;
+use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Cookie\CookieValuePrefix;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Cookie\CookieValuePrefix;
-use GuzzleHttp\Exception\ClientException;
-use Elyerr\Passport\Connect\Traits\Config;
 use Symfony\Component\HttpFoundation\Cookie;
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Illuminate\Contracts\Encryption\Encrypter;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Contracts\Encryption\DecryptException;
 
 class PassportConnect
 {
@@ -28,7 +28,7 @@ class PassportConnect
      * @var String
      */
     public $server_key;
- 
+
     /**
      * Token jwt propocionado por el servidor principal
      * @var String
@@ -58,13 +58,13 @@ class PassportConnect
     public function __construct(Encrypter $encrypter)
     {
         $this->encrypter = $encrypter;
-        $this->http = new Client();
+        $this->http = new Client(['verify' => false,]);
         $this->server_id = $this->env()->ids->server_id;
         $this->server_key = $this->env()->ids->server_key;
         $this->jwt_token = $this->env()->ids->jwt_token;
-        $this->jwt_refresh = $this->env()->ids->jwt_refresh; 
+        $this->jwt_refresh = $this->env()->ids->jwt_refresh;
 
-    } 
+    }
 
     /**
      * recupera el token jwt generado por el servidor
@@ -273,7 +273,7 @@ class PassportConnect
             'refresh_token' => $this->jwtRefresh($request),
             'client_id' => $this->serverId($request),
         ];
-         
+
         if ($this->serverKey($request)) {
             $form['client_secret'] = $this->serverKey($request);
         }
@@ -282,7 +282,7 @@ class PassportConnect
 
             $response_guzzle = $this->http
                 ->request('POST', $this->env()->server . '/api/oauth/token', [
-                    'form_params' => $form
+                    'form_params' => $form,
                 ]);
 
         } catch (ClientException $e) {
