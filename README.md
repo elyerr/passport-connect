@@ -1,8 +1,5 @@
 # Passport Connect
-Permite conectar fácilmente cualquier micro-servicio al servidor principal, este plugin funciona solo con el servidor de autorización [outh2-passport-server](https://gitlab.com/elyerr/outh2-passport-server)
-
-### Dependencias
-[Redis](https://redis.io/), Redis es un motor de base de datos en memoria, necesario para gestionar las sesiones con el servidor de autorización, independientemente del sistema de sesión que esté usando tu micro servicio, deberás instalarlo en tu servidor al ser de codigo abierto no implicara pagos adicionales por su uso. 
+Permite conectar fácilmente cualquier micro-servicio al servidor principal, este plugin funciona solo con el servidor de autorización [outh2-passport-server](https://gitlab.com/elyerr/outh2-passport-server) 
 
 ## CONFIGURACIÓN
 
