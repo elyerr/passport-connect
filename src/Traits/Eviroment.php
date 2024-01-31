@@ -27,12 +27,12 @@ trait Eviroment
      */
     public function addErrorView()
     {
-        $fs = new Filesystem;
+        $fs = new Filesystem();
         $DIR = base_path('resources/views/error');
         $FILE = 'report.blade.php';
 
         if (!file_exists($DIR)) {
-            $fs->mkdir($DIR);
+            $fs->makeDirectory($DIR);
         }
 
         $fs->copy(__DIR__ . "/../../resources/views/error/report.blade.php", "$DIR/$FILE");
