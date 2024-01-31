@@ -4,7 +4,6 @@ namespace Elyerr\Passport\Connect\Controllers;
 
 use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
-use Elyerr\Passport\Connect\Models\Session;
 use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
@@ -16,12 +15,12 @@ use view;
 class CodeController extends Controller
 {
     use Config;
+
     /**
      * @var PassportConnect
      */
     protected $passportConnect;
 
-    protected $session;
     /**
      * Constructor de la clase.
      *
@@ -29,10 +28,8 @@ class CodeController extends Controller
      */
     public function __construct(PassportConnect $passportConnect)
     {
-        $this->session = new Session($passportConnect);
         $this->middleware('guest');
         $this->passportConnect = $passportConnect;
-
     }
 
     /**
@@ -44,11 +41,7 @@ class CodeController extends Controller
      */
     public function login()
     {
-        $cookies = $this->session->startSession();
-
-        $response = $this->passportConnect->encrypt($cookies);
-
-        return $response->setContent(view('auth'));
+        return view('auth');
     }
 
     /**
@@ -57,21 +50,13 @@ class CodeController extends Controller
      * @param Request $request
      */
     public function redirect(Request $request)
-    {    
-        /**
-         * creamos una session
-         */
-        $state = Str::random(40);
-        $this->session->setKey($request, 'state', $state);
+    {
+        $request->session()->put('state', $state = Str::random(40));
 
-        /**
-         * creamos una propiedad que contendra el code_verifier, el cual
-         * se intercambiara con el server de authorizacion
-         */
-        $code_verifier = Str::random(128);
-        $this->session->setKey($request, 'code_verifier', $code_verifier);
+        $request->session()->put(
+            'code_verifier', $code_verifier = Str::random(128)
+        );
 
-        // Generar el código challenge
         $codeChallenge = strtr(rtrim(
             base64_encode(hash('sha256', $code_verifier, true))
             , '='), '+/', '-_');
@@ -85,11 +70,10 @@ class CodeController extends Controller
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
             'prompt' => $this->env()->prompt_mode,
-            'scope' => implode(' ', $this->env()->scopes)
+            'scope' => implode(' ', $this->env()->scopes),
         ]);
 
-        header('Location: ' . $this->env()->server . '/oauth/authorize?' . $query);
-        exit;
+        return redirect($this->env()->server . '/oauth/authorize?' . $query);
 
     }
 
@@ -101,40 +85,38 @@ class CodeController extends Controller
      */
     public function callback(Request $request)
     {
-        $transport_state = $request->state;        
+        $state = $request->session()->pull('state');
 
-        $state = $this->session->getKey($request, 'state');
-
-        $codeVerifier = $this->session->getKey($request, 'code_verifier');
+        $codeVerifier = $request->session()->pull('code_verifier');
 
         throw_unless(
-            strlen($state) > 0 && $state === $transport_state,
+            strlen($state) > 0 && $state === $request->state,
             new ReportError("La session no ha sido encontrada", 400)
         );
         try {
 
             $response_guzzle = $this->passportConnect->http
-                ->post( $this->env()->server . '/api/oauth/token', [
+                ->post($this->env()->server . '/api/oauth/token', [
                     'form_params' => [
                         'grant_type' => 'authorization_code',
                         'client_id' => $this->env()->server_id,
                         'redirect_uri' => $this->env()->host . '/callback',
                         'code_verifier' => $codeVerifier,
                         'code' => $request->code,
-                    ], 
+                    ],
                 ]);
         } catch (ClientException $e) {
             throw new ReportError("El servidor rechazo la conexion", 401);
 
         }
 
-        // Obtener los valores del encabezado y el cuerpo de la respuesta 
+        // Obtener los valores del encabezado y el cuerpo de la respuesta
         $body = $response_guzzle->getBody()->getContents();
-        $responseData = json_decode($body, true);
+        $data = json_decode($body);
 
-        $access_token = $responseData['token_type'] . " " . $responseData['access_token'];
-        $refresh_token = $responseData['refresh_token'];
-        $expires_in = $responseData['expires_in'];
+        $access_token = $data->token_type . " " . $data->access_token;
+        $refresh_token = $data->refresh_token;
+        $expires_in = $data->expires_in;
 
         // creacion de cookies
         $cookies = [

@@ -21,31 +21,32 @@ trait Passport
         $request = request();
         $cookie = $request->cookie($this->env()->ids->jwt_token);
 
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer $cookie",
-            'X-SCOPE' => $scope,
-        ])->get($this->env()->server . '/api/gateway/token-can');
-    
+        $response = Http::withoutVerifying()
+            ->withHeaders([
+                'Authorization' => "Bearer $cookie",
+                'X-SCOPE' => $scope,
+            ])->get($this->env()->server . '/api/gateway/token-can');
+
         return $response->status() === 200 ? true : false;
     }
-
 
     /**
      * retorna al usuario authenticado
      */
-     public function user()
+    public function user()
     {
         $request = request();
         $cookie = $request->cookie($this->env()->ids->jwt_token);
 
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer $cookie",
-        ])->get($this->env()->server . '/api/gateway/user');
-        
-        if ($response->status() === 200){
+        $response = Http::withoutVerifying()
+            ->withHeaders([
+                'Authorization' => "Bearer $cookie",
+            ])->get($this->env()->server . '/api/gateway/user');
+
+        if ($response->status() === 200) {
             return json_decode($response->body());
         }
 
-        return  null;
+        return null;
     }
 }

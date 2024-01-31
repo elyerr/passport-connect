@@ -25,14 +25,9 @@
     "prefer-stable": true,
     "require": {
         "elyerr/api-response": "^1.0",
-        "illuminate/contracts": "^10.0",
-        "illuminate/support": "^10.0",
-        "illuminate/filesystem": "^10.0",
-        "illuminate/cookie": "^10.0",
-        "illuminate/http": "^10.0",
-        "guzzlehttp/guzzle": "^7.0",
-        "symfony/http-foundation": "^6.0",
-        "illuminate/console": "^10.0",
-        "predis/predis": "^2.0"
-    } 
+        "guzzlehttp/guzzle": "^7.8"
+    },
+    "require-dev": {
+        "laravel/framework": "^10.38"
+    }
 }
