@@ -36,7 +36,7 @@
                     @if (isset($code) && $code == 401)
                         <form action="/login" method="GET">
                             <button type="submit" class="btn btn-primary">
-                                Generar nuevas credenciales
+                                Ir al login
                             </button>
                         </form>
                     @endif
