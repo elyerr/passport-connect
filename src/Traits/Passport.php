@@ -23,7 +23,7 @@ trait Passport
 
         $response = Http::withoutVerifying()
             ->withHeaders([
-                'Authorization' => "Bearer $cookie",
+                'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
                 'X-SCOPE' => $scope,
             ])->get($this->env()->server . '/api/gateway/token-can');
 
@@ -40,7 +40,7 @@ trait Passport
 
         $response = Http::withoutVerifying()
             ->withHeaders([
-                'Authorization' => "Bearer $cookie",
+                'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
             ])->get($this->env()->server . '/api/gateway/user');
 
         if ($response->status() === 200) {
