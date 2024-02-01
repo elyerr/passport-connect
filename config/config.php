@@ -8,7 +8,7 @@ return [
      * DNS o URL actual del microservicio que se esta desarollando
      * por ejemplo :  http://clients.dominio.dom
      */
-    'host' => env('APP_URL')?:'localhost',
+    'host' => env('APP_URL') ?: 'localhost',
 
     /**
      * Variable que determina la ubicacion principal del servidor de authorizacion
@@ -17,7 +17,7 @@ return [
      * por ejemplo : http://aouth2.dominio.dom
      */
     'server' => env('SERVER') ?: 'localhost:8080',
-    
+
     /**
      * Indentificador del server id del microservicio que se le asigno, este ID
      * lo genera el servidor de autorizacion, esta clave solo sera necesario cuando el cliente es
@@ -30,11 +30,11 @@ return [
      * none : modo desatendido, empleado cuando la palicacion no representan ningun riesgo
      * consent: solicitara al usuario que intervenga para que otrogue la autorrizacion
      * login: modo seguro, utilizado cuando la aplicacion a conectar contiene servicios confidenciales
-     * por ejemplo cuando el servicio necesita actualizar informacion de usuarios, solicitara que 
+     * por ejemplo cuando el servicio necesita actualizar informacion de usuarios, solicitara que
      * el usuario ingrese otra vez sus credenciales para que pueda realizar estas acciones
-     * 
+     * valores aceptados [none, consent, login]
      */
-    'prompt_mode' => env('PROMPT_MODE','consent')?:'login',
+    'prompt_mode' => env('PROMPT_MODE', 'consent'),
 
     /**
      * scopes o permisos para que los usuarios puedan accceder a las caracteristicas del cliente
@@ -46,8 +46,6 @@ return [
      * no es necesario cambiarlas, pero si lo haces todas deben tener un nombre distinto
      */
     'ids' => [
-        'server_id' => Str::slug(env('APP_NAME', 'passport'), '_') . '_id_outh2_server',
-        'server_key' => Str::slug(env('APP_NAME', 'passport'), '_') . '__key_outh2_server',
         'jwt_token' => Str::slug(env('APP_NAME', 'passport'), '_') . '_outh2_server',
         'jwt_refresh' => Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_outh2_server',
     ],
@@ -66,13 +64,6 @@ return [
     'redirect_after_login' => '/',
 
     /**
-     * Nombre de la Cookies donde se almacenara las el id de la session
-     * que se utilizara para poder recuperarla en cualquier momento por 
-     * defecto toma el nombre de la aplicacion. es remondable no modificar
-     */
-    'session' => Str::slug(env('APP_NAME') ?: 'passport', '_') . '_connect_outh2_server',
-
-    /**
      * Configuracion para la creacion de cookies, no es necesario cambiar la configuracion
      * pero puedes ajustarla a tu conveniencia
      */
@@ -84,18 +75,4 @@ return [
         'http_only' => true,
         'same_site' => 'lax',
     ],
-
-    /**
-     * Configuracion de redis que funciona para almacenar sesiones del plugin
-     * independientemente de la sesion de la aplicacion, puedes remplazar
-     * los datos por valores de tu instacia de redis de tu servidor
-     */
-    'redis' => [
-        'schema' => 'tcp',
-        'host' => env('REDIS_HOST') ?: '127.0.0.1',
-        'port' => env('REDIS_PORT') ?: '6379',
-        'database' => 1,
-        'prefix' => 'passport',
-    ],
-
 ];
