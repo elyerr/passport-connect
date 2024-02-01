@@ -46,6 +46,14 @@ Recuerda que antes de poder usar las rutas deberás configurar las rutas todo lo
 php artisan passport-connect:client-public
 ```
 
+## VARIABLES DE ENTORNO NECESARIAS
+```
+SERVER_ID="9b3a1165-5af7-4619-a04d-a51d16134acf"
+SERVER=https://servicio.dominio.com
+PROMPT_MODE=consent #consent|none|login
+SESSION_DOMAIN=servicio.dominio.com
+```
+
 ## MIDDLEWARES
 Clases encargadas de interceptar las peticiones y actuar con base en las credenciales del usuario, son las encargadas de crear el puente con el sistema de autorización para proporcionarte acceso al sistema.
 
