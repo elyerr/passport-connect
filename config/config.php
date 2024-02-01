@@ -32,9 +32,9 @@ return [
      * login: modo seguro, utilizado cuando la aplicacion a conectar contiene servicios confidenciales
      * por ejemplo cuando el servicio necesita actualizar informacion de usuarios, solicitara que
      * el usuario ingrese otra vez sus credenciales para que pueda realizar estas acciones
-     * valores aceptados [none, consent, login]
+     * valores aceptados [none, consent,login]
      */
-    'prompt_mode' => env('PROMPT_MODE', 'consent'),
+    'prompt_mode' => env('PROMPT_MODE', 'consent') ?: 'login',
 
     /**
      * scopes o permisos para que los usuarios puedan accceder a las caracteristicas del cliente
