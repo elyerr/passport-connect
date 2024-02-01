@@ -17,17 +17,6 @@ use Symfony\Component\HttpFoundation\Cookie;
 class PassportConnect
 {
     use Config;
-    /**
-     * identificador del usurio privado o usuario confidencial
-     * @var String
-     */
-    public $server_id;
-
-    /**
-     * clave secreta del usuario privado o usuario confidencial
-     * @var String
-     */
-    public $server_key;
 
     /**
      * Token jwt propocionado por el servidor principal
@@ -55,15 +44,15 @@ class PassportConnect
      */
     public $http;
 
+    /**
+     * Contructor de la clase
+     */
     public function __construct(Encrypter $encrypter)
     {
         $this->encrypter = $encrypter;
-        $this->http = new Client(['verify' => false,]);
-        $this->server_id = $this->env()->ids->server_id;
-        $this->server_key = $this->env()->ids->server_key;
+        $this->http = new Client(['verify' => false]);
         $this->jwt_token = $this->env()->ids->jwt_token;
         $this->jwt_refresh = $this->env()->ids->jwt_refresh;
-
     }
 
     /**
@@ -87,28 +76,6 @@ class PassportConnect
     public function jwtRefresh(Request $request)
     {
         return $this->getCookie($request, $this->jwt_refresh) ?: null;
-    }
-
-    /**
-     * recupera el id del cliente cuando es un cliente confidencial
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return String
-     */
-    public function serverId(Request $request)
-    {
-        return $this->getCookie($request, $this->server_id) ?: $this->env()->server_id;
-    }
-
-    /**
-     * recupera el secret del cliente cuando este es cliente confidencial
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return String
-     */
-    public function serverKey(Request $request)
-    {
-        return $this->getCookie($request, $this->server_key) ?: null;
     }
 
     /**
@@ -148,7 +115,6 @@ class PassportConnect
      */
     public function storeCookie($name, $value, $timeExpires, $http_only = true)
     {
-
         return Cookie(
             $name,
             $value,
@@ -265,39 +231,25 @@ class PassportConnect
      */
     public function renewCredentials($request)
     {
-        throw_unless($this->jwtRefresh($request),
-            new ReportError('El refresh token no pudo ser localizado', 401));
-
         $form = [
             'grant_type' => 'refresh_token',
             'refresh_token' => $this->jwtRefresh($request),
-            'client_id' => $this->serverId($request),
+            'client_id' => $this->env()->server_id,
         ];
 
-        if ($this->serverKey($request)) {
-            $form['client_secret'] = $this->serverKey($request);
-        }
+        $response = $this->http
+            ->request('POST', $this->env()->server . '/api/oauth/token', [
+                'form_params' => $form,
+            ]);
 
-        try {
-
-            $response_guzzle = $this->http
-                ->request('POST', $this->env()->server . '/api/oauth/token', [
-                    'form_params' => $form,
-                ]);
-
-        } catch (ClientException $e) {
-            throw new ReportError('error al actualizar las credenciales', 401);
-        }
-
-        $expires_in = json_decode($response_guzzle->getBody(), true)['expires_in'];
+        $expires_in = json_decode($response->getBody(), true)['expires_in'];
 
         $cookies = [
-            $this->storeCookie($this->jwt_token, json_decode($response_guzzle->getBody(), true)['access_token'], ($expires_in / 60)),
-            $this->storeCookie($this->jwt_refresh, json_decode($response_guzzle->getBody(), true)['refresh_token'], (100 * 24 * 60)),
+            $this->storeCookie($this->jwt_token, json_decode($response->getBody(), true)['access_token'], ($expires_in / 60)),
+            $this->storeCookie($this->jwt_refresh, json_decode($response->getBody(), true)['refresh_token'], (100 * 24 * 60)),
         ];
 
         return $cookies;
-
     }
 
     /**
@@ -324,25 +276,29 @@ class PassportConnect
     {
         if ($response->getStatusCode() == 401) {
 
-            $credentials = $this->renewCredentials($request);
+            try {
 
-            if (count($credentials) == 0) {
-                header("Location: " . $this->env()->login);
-                exit;
+                $credentials = $this->renewCredentials($request);
+
+                if (count($credentials) == 0) {
+                    return redirect($this->env()->login);
+                }
+
+                $response = $this->encrypt($credentials);
+
+                if (!$request->wantsJson()) {
+
+                    $response->headers->set('Location', $this->getUri());
+                    $response->setStatusCode(Response::HTTP_FOUND);
+                    return $response->send();
+                }
+
+                $response->setStatusCode(Response::HTTP_CREATED);
+                return $response->setContent('Credenciales actualizadas');
+
+            } catch (ClientException $e) {
+                return redirect($this->env()->login);
             }
-
-            $response = $this->encrypt($credentials);
-
-            if (!$request->wantsJson()) {
-
-                $response->headers->set('Location', $this->getUri());
-                $response->setStatusCode(Response::HTTP_FOUND);
-                return $response->send();
-
-            }
-
-            $response->setStatusCode(Response::HTTP_CREATED);
-            return $response->setContent('Credenciales actualizadas');
         }
     }
 
