@@ -1,9 +1,10 @@
 # Passport Connect
-Permite conectar fácilmente cualquier micro-servicio al servidor principal, este plugin funciona solo con el servidor de autorización [outh2-passport-server](https://gitlab.com/elyerr/outh2-passport-server) 
+Permite conectar fácilmente cualquier micro-servicio al servidor principal, este plugin funciona solo con el servidor de autorización [outh2-server](https://gitlab.com/elyerr/midori-server) 
 
 ## CONFIGURACIÓN
 
 ### PUBLICAR CONFIGURACIÓN
+Publicar el archivo de configuracion y variables de entorno se debe ejecutar el siguiente comando, necesario para la configuracion con el servidor principal.
 ```
 php artisan vendor:publish --tag=passport_connect
 ```
@@ -49,9 +50,24 @@ php artisan passport-connect:client-public
 ## VARIABLES DE ENTORNO NECESARIAS
 ```
 SERVER_ID="9b3a1165-5af7-4619-a04d-a51d16134acf"
+
+#servidor de autorizacion
 SERVER=https://servicio.dominio.com
+
+#modo de autorizacion
 PROMPT_MODE=consent #consent|none|login
+
+#necesrio para la creacion de cookies
 SESSION_DOMAIN=servicio.dominio.com
+
+#scopes para el cliente
+CLIENT_SCOPES='scope1 scope2 scopex'
+
+#redireccion luego de logearse
+REDIRECT_TO='/'
+
+#key requerida para enviar notificaciones desde los Microservicios a todos los usuarios
+VERIFY_NOTIFICATION
 ```
 
 ## MIDDLEWARES
@@ -82,7 +98,26 @@ class Test {
     public function __construct(){
         //puedes acceder a ella de la siguiente manera pasandole el nombre del escope
         $variable = $this->userCan('test');
-        $user = $this->user();
+
+       
+        /**
+        * envia una notificacion a un usuario, grupo de usuario , o a todos
+        * en users acepta un email o correo electronico, un scope apara ese grupo de usuarios o asteristco '*' para todos los usuarios
+        * 
+        */
+         $this->send_notification([
+            'via' => ['database'], //database o email
+            'subject' => 'hola', //string
+            'message' => 'que tal', //string
+            'users' => 'admin@admin.com', 
+            'resource' => 'https://admin.com.pe', // link
+        ]);*/
+
+        //examina si tiene un scope tiene permiso sobre la session
+        $this->userCan('assets');
+        
+        //obtiene datos del usuario
+        $this->user()
     }
 }
 ```
