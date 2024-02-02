@@ -39,15 +39,15 @@ return [
     /**
      * scopes o permisos para que los usuarios puedan accceder a las caracteristicas del cliente
      */
-    'scopes' => [],
+    'scopes' => env('CLIENT_SCOPES',''),
 
     /**
      * Variable donde se manejara las credenciales de los usuarios, estas variables
      * no es necesario cambiarlas, pero si lo haces todas deben tener un nombre distinto
      */
     'ids' => [
-        'jwt_token' => Str::slug(env('APP_NAME', 'passport'), '_') . '_outh2_server',
-        'jwt_refresh' => Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_outh2_server',
+        'jwt_token' => env('PASSPORT_TOKEN', Str::slug(env('APP_NAME', 'passport'), '_')) . '_outh2_server',
+        'jwt_refresh' => env('PASSPORT_REFRESH', Str::slug(env('APP_NAME', 'passport'), '_')) . '_refresh_outh2_server',
     ],
 
     /**
@@ -61,7 +61,7 @@ return [
      * genereado las credenciales en el la ruta /callback , debes ajustar el valor
      * a dependiendo de la configuracion de tu microservicio
      */
-    'redirect_after_login' => '/',
+    'redirect_after_login' => env('REDIRECT_TO', '/'),
 
     /**
      * Configuracion para la creacion de cookies, no es necesario cambiar la configuracion
@@ -75,4 +75,10 @@ return [
         'http_only' => true,
         'same_site' => 'lax',
     ],
+
+    /**
+     * Key para permitir enviar notificaciones al server de autoriozacion
+     *
+     */
+    'verify_notification' => env('VERIFY_NOTIFICATION'),
 ];
