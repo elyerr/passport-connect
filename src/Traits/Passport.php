@@ -2,13 +2,23 @@
 
 namespace Elyerr\Passport\Connect\Traits;
 
+use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Traits\Config;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 
 trait Passport
 {
 
     use Config;
+
+    /**
+     * cliente de guzzle
+     */
+    public function client()
+    {
+        return new Client(['verify' => false]);
+    }
 
     /**
      * verifica que el cliente a traves de un usuario verifique si cuenta
@@ -21,32 +31,83 @@ trait Passport
         $request = request();
         $cookie = $request->cookie($this->env()->ids->jwt_token);
 
-        $response = Http::withoutVerifying()
-            ->withHeaders([
-                'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
-                'X-SCOPE' => $scope,
-            ])->get($this->env()->server . '/api/gateway/token-can');
+        try {
 
-        return $response->status() === 200 ? true : false;
+            $this->client()
+                ->get($this->env()->server . '/api/gateway/token-can', [
+                    'headers' => [
+                        'X-SCOPE' => $scope,
+                        'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
+                    ],
+                ]);
+
+            return true;
+
+        } catch (ClientException $e) {
+            
+            throw_unless($e->getCode() === 403, new ReportError($e->getMessage(), $e->getCode()));
+
+            return false;
+        }
     }
 
     /**
      * retorna al usuario authenticado
+     *
      */
     public function user()
     {
         $request = request();
         $cookie = $request->cookie($this->env()->ids->jwt_token);
 
-        $response = Http::withoutVerifying()
-            ->withHeaders([
-                'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
-            ])->get($this->env()->server . '/api/gateway/user');
+        try {
 
-        if ($response->status() === 200) {
-            return json_decode($response->body());
+            $response = $this->client()
+                ->get($this->env()->server . '/api/gateway/user', [
+                    'headers' => [
+                        'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
+                    ],
+                ]);
+
+            throw_unless($response->getStatusCode() === 200, new ReportError($response->getBody(), $response->getStatusCode()));
+
+            return json_decode($response->getBody());
+
+        } catch (ClientException $e) {
+
+            throw new ReportError($e->getMessage(), $e->getCode());
         }
+    }
 
-        return null;
+    /**
+     * envia una notificacion, recibe como parametro un array de opciones, para que se
+     * puedan enviar notificaciones se debe agregar VERIFY_NOTIFICATION en la variable de
+     * entorno en el archivo .env, la data dentro del array debe contener los siguiente
+     * via: [array] | valores['database','email']
+     * subject: [string]
+     * message: [string]
+     * users: [string] | valores['email', '*','scope']
+     *
+     * @param Array $form
+     */
+    public function send_notification(array $form)
+    {
+        $request = request();
+        $cookie = $request->cookie($this->env()->ids->jwt_token);
+
+        try {
+            $this->client()
+                ->post($this->env()
+                        ->server . '/api/gateway/send-notification', [
+                        'headers' => [
+                            'X-VERIFY-NOTIFICATION' => $this->env()->verify_notification,
+                            'Authorization' => $cookie ? "Bearer $cookie" : $request->header,
+                        ],
+                        'form_params' => $form,
+                    ]);
+            return true;
+        } catch (ClientException $e) {
+            return false;
+        }
     }
 }
