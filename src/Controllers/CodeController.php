@@ -70,11 +70,10 @@ class CodeController extends Controller
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
             'prompt' => $this->env()->prompt_mode,
-            'scope' => implode(' ', $this->env()->scopes),
+            'scope' => $this->env()->scopes,
         ]);
 
         return redirect($this->env()->server . '/oauth/authorize?' . $query);
-
     }
 
     /**
@@ -91,7 +90,7 @@ class CodeController extends Controller
 
         throw_unless(
             strlen($state) > 0 && $state === $request->state,
-            new ReportError("La session no ha sido encontrada", 400)
+            new ReportError("Error al encontrar la session", 400)
         );
         try {
 
@@ -106,8 +105,7 @@ class CodeController extends Controller
                     ],
                 ]);
         } catch (ClientException $e) {
-            throw new ReportError("El servidor rechazo la conexion", 401);
-
+            throw new ReportError("Usuario no authenticado", 401);
         }
 
         // Obtener los valores del encabezado y el cuerpo de la respuesta
