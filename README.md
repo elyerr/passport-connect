@@ -30,9 +30,7 @@ use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;
 public function __construct(EncrypterContract $encrypter)
 { 
 parent::__construct($encrypter);
-$except = [
-config('passport_connect.ids.server_id'),
-config('passport_connect.ids.server_key'),
+$except = [ 
 config('passport_connect.ids.jwt_token'),
 config('passport_connect.ids.jwt_refresh'),
 ];
