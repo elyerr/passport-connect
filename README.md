@@ -55,8 +55,13 @@ SERVER=https://servicio.dominio.com
 #modo de autorizacion
 PROMPT_MODE=consent #consent|none|login
 
-#necesrio para la creacion de cookies
+#necesrio para la creacion de cookies si usas token global cambiar .dominio.com
 SESSION_DOMAIN=servicio.dominio.com
+
+#para crear un nombre personalizado o cuando es token global
+#PASSPORT_TOKEN="astian_server"
+#PASSPORT_REFRESH="${PASSPORT_TOKEN}_refresh"
+
 
 #scopes para el cliente
 CLIENT_SCOPES='scope1 scope2 scopex'
