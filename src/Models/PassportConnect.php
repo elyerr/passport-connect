@@ -186,11 +186,11 @@ class PassportConnect
     public function errorCodes()
     {
         return [
-            '400' => 'no se puede procesar la solicitud tiene una sitaxis invalida',
-            '401' => 'credenciales incorrectas, solicite unas validas',
-            '404' => 'el servidor no pudo encontrar el recurso que buscaba',
-            '403' => 'no tiene los permisos correspondientes para realizar esta operacion',
-            '406' => 'su solicitud tiene credenciales correctas pero el servidor se reusa a procesar',
+            '400' => 'Bad request',
+            '401' => 'Unauthenticated',
+            '404' => 'Not found',
+            '403' => 'Unauthorized',
+            '406' => 'Not acceptable'
         ];
 
     }
@@ -294,9 +294,13 @@ class PassportConnect
                 }
 
                 $response->setStatusCode(Response::HTTP_CREATED);
-                return $response->setContent('Credenciales actualizadas');
+                return $response->setContent(__('Credentials has been updated'));
 
             } catch (ClientException $e) {
+
+                if (request()->wantsJson()) {
+                    throw new ReportError(__('Unauthenticated'), 401);
+                }
                 return redirect($this->env()->login);
             }
         }

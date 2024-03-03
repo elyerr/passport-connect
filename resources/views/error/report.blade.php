@@ -4,11 +4,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
+    <title>{{ config('app.name') }}</title>
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
@@ -17,10 +14,10 @@
 
 </head>
 
-<body class="font-sans antialiased bg-dark text-light">
+<body class="font-sans">
 
     <div class="container">
-        <div class="card bg-dark text-light mt-5">
+        <div class="card mt-5">
             <div class="card-head mb-5 text-center fw-bold h1 text-secondary">
                 @if (isset($code))
                     <span>{{ $code }}</span>
@@ -36,7 +33,7 @@
                     @if (isset($code) && $code == 401)
                         <form action="/login" method="GET">
                             <button type="submit" class="btn btn-primary">
-                                Ir al login
+                            {{ __('Go to the login')}}
                             </button>
                         </form>
                     @endif
@@ -45,4 +42,5 @@
         </div>
     </div>
 </body>
+
 </html>
