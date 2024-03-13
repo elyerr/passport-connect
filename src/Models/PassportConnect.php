@@ -190,7 +190,7 @@ class PassportConnect
             '401' => 'Unauthenticated',
             '404' => 'Not found',
             '403' => 'Unauthorized',
-            '406' => 'Not acceptable'
+            '406' => 'Not acceptable',
         ];
 
     }
@@ -294,7 +294,7 @@ class PassportConnect
                 }
 
                 $response->setStatusCode(Response::HTTP_CREATED);
-                return $response->setContent(__('Credentials has been updated'));
+                return $response->setContent(Response::HTTP_NO_CONTENT);
 
             } catch (ClientException $e) {
 

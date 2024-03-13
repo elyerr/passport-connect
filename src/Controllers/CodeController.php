@@ -90,7 +90,7 @@ class CodeController extends Controller
 
         throw_unless(
             strlen($state) > 0 && $state === $request->state,
-            new ReportError("Error al encontrar la session", 400)
+            new ReportError("Can't find the session", 400)
         );
         try {
 
@@ -105,14 +105,14 @@ class CodeController extends Controller
                     ],
                 ]);
         } catch (ClientException $e) {
-            throw new ReportError("Usuario no authenticado", 401);
+            throw new ReportError(__('Unauthenticated user'), 401);
         }
 
         // Obtener los valores del encabezado y el cuerpo de la respuesta
         $body = $response_guzzle->getBody()->getContents();
         $data = json_decode($body);
 
-        $access_token = $data->token_type . " " . $data->access_token;
+        $access_token = $data->access_token;
         $refresh_token = $data->refresh_token;
         $expires_in = $data->expires_in;
 
