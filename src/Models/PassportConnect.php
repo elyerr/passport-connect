@@ -115,12 +115,14 @@ class PassportConnect
      */
     public function storeCookie($name, $value, $timeExpires, $http_only = true)
     {
+        $host = $this->env()->cookie->domain ? $this->env()->cookie->domain : $_SERVER['HTTP_HOST'];
+
         return Cookie(
             $name,
             $value,
             $timeExpires,
             $this->env()->cookie->path,
-            $this->env()->cookie->domain,
+            $host,
             $this->env()->cookie->secure,
             $http_only,
             false,
