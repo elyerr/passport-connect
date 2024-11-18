@@ -2,16 +2,15 @@
 
 namespace Elyerr\Passport\Connect\Console;
 
-use Elyerr\Passport\Connect\Traits\Eviroment;
+use Elyerr\Passport\Connect\Traits\Environment;
 use Illuminate\Console\Command;
 
 class ClientConsole extends Command
 {
-
-    use Eviroment;
+    use Environment;
 
     /**
-     * @var String
+     * @var string
      */
     protected $routes;
 
@@ -27,7 +26,7 @@ class ClientConsole extends Command
      *
      * @var string|null
      */
-    protected $description = "Configura el cliente publico";
+    protected $description = "Set the config for public client";
 
     public function __construct()
     {
@@ -43,22 +42,22 @@ class ClientConsole extends Command
      */
     public function handle()
     {
-        $this->addEviromentServer();
-        $this->addEviromentKey();
+        $this->addEnvironmentServer();
+        $this->addEnvironmentKey();
         $this->addErrorView();
         $this->addAuthView();
-        $this->addMidleware();
+        $this->addMiddleware();
         $this->uploadImport();
         $this->uploadRoutes();
 
-        $this->info("La configuracion ha sido configurada");
+        $this->info("The config is ready");
     }
 
     /**
-     * Identificador unico para el cliente, esta variable es necesaria cuando
-     * se trata de un cliente confidencial
+     * Add new environment into the .env file
+     * @return void
      */
-    public function addEviromentKey()
+    public function addEnvironmentKey()
     {
         $file = base_path('.env');
 
@@ -66,7 +65,7 @@ class ClientConsole extends Command
     }
 
     /**
-     * Importa el controlador para las rutas
+     * Load CodeController
      * @return void
      */
     public function uploadImport()
@@ -93,7 +92,7 @@ class ClientConsole extends Command
     }
 
     /**
-     * Registra las rutas necesarias para el cliente publico funciones
+     * Register the routes 
      * @return void
      */
     public function uploadRoutes()
@@ -119,6 +118,5 @@ class ClientConsole extends Command
                 $index += 1;
             }
         }
-
     }
 }

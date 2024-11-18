@@ -10,7 +10,15 @@ use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
 
 class CheckClientCredentials extends PassportConnect
-{
+{   
+    /**
+     * Checking credentials and client credentials
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @param mixed $scopes
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
+     */
     public function handle(Request $request, Closure $next, $scopes)
     {
         $credentials = $this->credentials($request);
@@ -35,7 +43,6 @@ class CheckClientCredentials extends PassportConnect
                 } catch (ServerException $e) {
                     throw new ReportError("Can't update credentials", 401);
                 }
-
             }
         }
     }

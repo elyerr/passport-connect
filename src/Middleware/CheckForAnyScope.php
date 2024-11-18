@@ -12,11 +12,12 @@ use Elyerr\Passport\Connect\Models\PassportConnect;
 class CheckForAnyScope extends PassportConnect
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * Checking credentials and any scopes 
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @param mixed $scopes
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
      */
     public function handle(Request $request, Closure $next, $scopes)
     {
@@ -42,7 +43,6 @@ class CheckForAnyScope extends PassportConnect
                 } catch (ServerException $e) {
                     throw new ReportError("Can't update credentials", 401);
                 }
-
             }
         }
     }

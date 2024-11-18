@@ -5,7 +5,11 @@ namespace Elyerr\Passport\Connect\Traits;
 use ErrorException;
 
 trait Config
-{
+{   
+    /**
+     * Set de conf file
+     * @return mixed
+     */
     public function env()
     {
         try {

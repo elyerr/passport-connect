@@ -22,7 +22,7 @@ class CodeController extends Controller
     protected $passportConnect;
 
     /**
-     * Constructor de la clase.
+     * Constructor
      *
      * @param PassportConnect $passportConnect
      */
@@ -33,11 +33,8 @@ class CodeController extends Controller
     }
 
     /**
-     * Muestra la vista de inicio de sesión cuando el usuario no está autorizado.
-     * esta configuracion esta pensada para funconar bajo laravel si en tu proyecto
-     * no usas laravel puedes adecuarla para que renorne la vista
-     *
-     * @return View
+     * Show the login view
+     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function login()
     {
@@ -45,9 +42,9 @@ class CodeController extends Controller
     }
 
     /**
-     * Redirecciona para solicitar un código de autorización.
-     *
-     * @param Request $request
+     * Make redirect action to generate a code response
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function redirect(Request $request)
     {
@@ -61,7 +58,7 @@ class CodeController extends Controller
             base64_encode(hash('sha256', $code_verifier, true))
             , '='), '+/', '-_');
 
-        // Crear la URL con los parámetros para la solicitud
+        //Query options to generate a code 
         $query = http_build_query([
             'client_id' => $this->env()->server_id,
             'redirect_uri' => $this->env()->host . '/callback',
@@ -77,10 +74,10 @@ class CodeController extends Controller
     }
 
     /**
-     * Permite intercambiar el código generado en primera instancia con un token JWT
-     * y generar cookies de sesión.
-     *
-     * @param Request $request
+     * Make a requests to the oauth 2 server using the code to generate valid credentials
+     * @param \Illuminate\Http\Request $request
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return \Illuminate\Http\Response
      */
     public function callback(Request $request)
     {
@@ -108,7 +105,6 @@ class CodeController extends Controller
             throw new ReportError(__('Unauthenticated user'), 401);
         }
 
-        // Obtener los valores del encabezado y el cuerpo de la respuesta
         $body = $response_guzzle->getBody()->getContents();
         $data = json_decode($body);
 
@@ -116,7 +112,6 @@ class CodeController extends Controller
         $refresh_token = $data->refresh_token;
         $expires_in = $data->expires_in;
 
-        // creacion de cookies
         $cookies = [
             $this->passportConnect->storeCookie($this->passportConnect->jwt_token, $access_token, ($expires_in / 60)),
             $this->passportConnect->storeCookie($this->passportConnect->jwt_refresh, $refresh_token, (30 * 24 * 60)),
@@ -128,5 +123,4 @@ class CodeController extends Controller
         $response->setStatusCode(Response::HTTP_FOUND);
         return $response->send();
     }
-
 }

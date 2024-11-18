@@ -5,15 +5,15 @@ namespace Elyerr\Passport\Connect\Traits;
 use Elyerr\ApiResponse\Assets\Asset;
 use Illuminate\Filesystem\Filesystem;
 
-trait Eviroment
+trait Environment
 {
     use Asset;
 
     /**
-     * Agrega la variable de entorno del dominio del servidor
+     * Add new environment server
      * @return void
      */
-    public function addEviromentServer()
+    public function addEnvironmentServer()
     {
         $file = base_path('.env');
 
@@ -21,8 +21,7 @@ trait Eviroment
     }
 
     /**
-     * Agrega una vista personalizada para mostrar errores.
-     *
+     * Add error view to show errors
      * @return void
      */
     public function addErrorView()
@@ -40,8 +39,7 @@ trait Eviroment
     }
 
     /**
-     * Agrega una vista personalizada para mostrar errores.
-     *
+     * Add and auth view
      * @return void
      */
     public function addAuthView()
@@ -54,9 +52,10 @@ trait Eviroment
     }
 
     /**
-     * registra los middlware en el kernel
+     * Register the middleware
+     * @return void
      */
-    public function addMidleware()
+    public function addMiddleware()
     {
         $middlewares = [
             "'server' => \Elyerr\Passport\Connect\Middleware\Authorization::class",
@@ -82,7 +81,5 @@ trait Eviroment
                 $index += 1;
             }
         }
-
     }
-
 }

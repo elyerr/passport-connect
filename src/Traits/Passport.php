@@ -13,7 +13,8 @@ trait Passport
     use Config;
 
     /**
-     * cliente de guzzle
+     * Guzzle instances
+     * @return Client
      */
     public function client()
     {
@@ -21,9 +22,8 @@ trait Passport
     }
 
     /**
-     * verifica que el cliente a traves de un usuario verifique si cuenta
-     * con permisos correcto antes de ejecutar la accion
-     * @param String $scope
+     * Checking the scope for current user
+     * @param mixed $scope
      * @return bool
      */
     public function userCan($scope)
@@ -52,8 +52,9 @@ trait Passport
     }
 
     /**
-     * retorna al usuario authenticado
-     *
+     * Get the current user 
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
      */
     public function user()
     {
@@ -80,15 +81,9 @@ trait Passport
     }
 
     /**
-     * envia una notificacion, recibe como parametro un array de opciones, para que se
-     * puedan enviar notificaciones se debe agregar VERIFY_NOTIFICATION en la variable de
-     * entorno en el archivo .env, la data dentro del array debe contener los siguiente
-     * via: [array] | valores['database','email']
-     * subject: [string]
-     * message: [string]
-     * users: [string] | valores['email', '*','scope']
-     *
-     * @param Array $form
+     * Send notifications
+     * @param array $form
+     * @return bool
      */
     public function send_notification(array $form)
     {

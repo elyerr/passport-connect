@@ -13,11 +13,12 @@ use Illuminate\Support\Facades\Http;
 class CheckScopes extends PassportConnect
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
-     * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
+     * Checking credential and all scopes for the user
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @param mixed $scopes
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
      */
     public function handle(Request $request, Closure $next, $scopes)
     {

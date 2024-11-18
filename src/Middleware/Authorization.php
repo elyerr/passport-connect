@@ -9,7 +9,14 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ServerException;
 
 class Authorization extends PassportConnect
-{
+{   
+    /**
+     * Checking the credentials is valid
+     * @param mixed $request
+     * @param \Closure $next
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
+     */
     public function handle($request, Closure $next)
     {
         $credentials = $this->credentials($request);

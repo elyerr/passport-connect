@@ -2,31 +2,31 @@
 
 namespace Elyerr\Passport\Connect\Models;
 
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use Illuminate\Contracts\Encryption\DecryptException;
-use Illuminate\Contracts\Encryption\Encrypter;
-use Illuminate\Cookie\CookieValuePrefix;
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Cookie\CookieValuePrefix;
+use GuzzleHttp\Exception\ClientException;
+use Elyerr\Passport\Connect\Traits\Config;
 use Symfony\Component\HttpFoundation\Cookie;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Illuminate\Contracts\Encryption\Encrypter;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class PassportConnect
 {
     use Config;
 
     /**
-     * Token jwt propocionado por el servidor principal
-     * @var String
+     * Token JWT 
+     * @var string
      */
     public $jwt_token;
 
     /**
-     * Token de refresh para intercambiar cuando el token twt ha vencido
-     * este se usa con el grant_type refresh_token
+     * Refresh token to update credentials
+     * @var 
      */
     public $jwt_refresh;
 
@@ -38,15 +38,12 @@ class PassportConnect
     protected $encrypter;
 
     /**
-     * Guzzle variable
+     * Guzzle 
      *
      * @var \GuzzleHttp\Client
      */
     public $http;
 
-    /**
-     * Contructor de la clase
-     */
     public function __construct(Encrypter $encrypter)
     {
         $this->encrypter = $encrypter;
@@ -56,10 +53,9 @@ class PassportConnect
     }
 
     /**
-     * recupera el token jwt generado por el servidor
-     *
+     * Retrieve the JWT token
      * @param \Illuminate\Http\Request $request
-     * @return String
+     * @return string
      */
     public function jwtToken(Request $request)
     {
@@ -67,11 +63,9 @@ class PassportConnect
     }
 
     /**
-     * recupera el refresh_token
-     *
-     *storeCookie
+     * Retrieve the refresh token
      * @param \Illuminate\Http\Request $request
-     * @return String
+     * @return string|null
      */
     public function jwtRefresh(Request $request)
     {
@@ -79,12 +73,10 @@ class PassportConnect
     }
 
     /**
-     * Obtine la cookie y la desencripta en el proceso o devulve la cookie
-     * si esta no esta encripatada
-     *
-     * @param Request $request
-     * @param String $name
-     * @return String
+     * Retrieve and decrypt the cookie
+     * @param \Illuminate\Http\Request $request
+     * @param mixed $name
+     * @return array|string|null
      */
     public function getCookie(Request $request, $name)
     {
@@ -105,13 +97,12 @@ class PassportConnect
     }
 
     /**
-     * crea una nueva instancia de una cookie
-     *
-     * @param String $name
-     * @param String $value
-     * @param Int $timeExpires
-     * @param Boolean $http_only
-     * @return \Symfony\Component\HttpFoundation\Cookie
+     * Create a new cookie
+     * @param string $name
+     * @param string $value
+     * @param int $timeExpires
+     * @param bool $http_only
+     * @return Cookie|\Illuminate\Cookie\CookieJar
      */
     public function storeCookie($name, $value, $timeExpires, $http_only = true)
     {
@@ -131,10 +122,9 @@ class PassportConnect
     }
 
     /**
-     * encripta las cookies y las envia en las respuestas al cliente
-     *
-     * @param Cookies|Array $cookies
-     * @return  Response
+     * Encrypt the cookies and sent to the user 
+     * @param mixed $cookies
+     * @return mixed
      */
     public function encrypt($cookies)
     {
@@ -146,8 +136,10 @@ class PassportConnect
                     $response->withCookie($this->duplicate(
                         $cookie,
                         $this->encrypter->encrypt(
-                            CookieValuePrefix::create($cookie->getName(),
-                                $this->encrypter->getKey()) . $cookie->getValue(),
+                            CookieValuePrefix::create(
+                                $cookie->getName(),
+                                $this->encrypter->getKey()
+                            ) . $cookie->getValue(),
                             EncryptCookies::serialized($cookie->getName())
                         )
                     ));
@@ -155,16 +147,14 @@ class PassportConnect
                     $response->withCookie($this->storeCookie(
                         $cookie->getName(),
                         $cookie->getValue(),
-                        $cookie->getExpiresTime(), false
+                        $cookie->getExpiresTime(),
+                        false
                     ));
                 }
             }
-
-            return $response;
         }
-        /**
-         * cuando no es un array de cookies
-         */
+
+        //There is not an array
         if ($cookies->getName() == $this->jwt_token) {
             return $response->withCookie($cookies);
         }
@@ -172,18 +162,20 @@ class PassportConnect
         $response->withCookie($this->duplicate(
             $cookies,
             $this->encrypter->encrypt(
-                CookieValuePrefix::create($cookies->getName(),
-                    $this->encrypter->getKey()) . $cookies->getValue(),
+                CookieValuePrefix::create(
+                    $cookies->getName(),
+                    $this->encrypter->getKey()
+                ) . $cookies->getValue(),
                 EncryptCookies::serialized($cookies->getName())
             )
         ));
         return $response->sendHeaders();
     }
 
+
     /**
-     * descripcion de errores
-     *
-     * @return Array|mixed
+     * Error response
+     * @return string[]
      */
     public function errorCodes()
     {
@@ -197,10 +189,11 @@ class PassportConnect
 
     }
 
+
     /**
-     * busca el token jwt por medio de la cookies o por la cabecera Authorization
-     *
-     * @return String
+     * Search credentials 
+     * @param \Illuminate\Http\Request $request
+     * @return array
      */
     public function credentials(Request $request)
     {
@@ -212,9 +205,9 @@ class PassportConnect
     }
 
     /**
-     * reporta errores
-     *
-     * @param  $response
+     * Report errors
+     * @param mixed $response
+     * @return void
      */
     public function report($response)
     {
@@ -226,10 +219,9 @@ class PassportConnect
     }
 
     /**
-     * renova las credenciales si existe un refresh token
-     *
-     * @param  Request $request
-     * @return mixed
+     * Renew credentials using the refresh token
+     * @param mixed $request
+     * @return array
      */
     public function renewCredentials($request)
     {
@@ -255,11 +247,10 @@ class PassportConnect
     }
 
     /**
-     * reemplaza una cookie en el response.
-     *
-     * @param  \Symfony\Component\HttpFoundation\Cookie  $cookie
-     * @param  mixed  $value
-     * @return \Symfony\Component\HttpFoundation\Cookie
+     * Replace the cookie in the response
+     * @param \Symfony\Component\HttpFoundation\Cookie $cookie
+     * @param mixed $value
+     * @return Cookie|\Illuminate\Cookie\CookieJar
      */
     protected function duplicate(Cookie $cookie, $value)
     {
@@ -267,12 +258,11 @@ class PassportConnect
     }
 
     /**
-     * redirecciona cuando un usuario no esta authenticado o no se puede
-     * generar nuevas credenciales
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \Illuminate\Http\Response $response
-     * @return \Illuminate\Http\Response
+     * Checking the authentication
+     * @param mixed $request
+     * @param mixed $response
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return Response|\Illuminate\Http\RedirectResponse
      */
     public function isNotAuthenticable($request, $response)
     {
@@ -289,14 +279,13 @@ class PassportConnect
                 $response = $this->encrypt($credentials);
 
                 if (!$request->wantsJson()) {
-
                     $response->headers->set('Location', $this->getUri());
-                    $response->setStatusCode(Response::HTTP_FOUND);
+                    $response->setStatusCode(302);
                     return $response->send();
                 }
 
-                $response->setStatusCode(Response::HTTP_CREATED);
-                return $response->setContent(Response::HTTP_NO_CONTENT);
+                $response->setStatusCode(201);
+                return $response->setContent(204);
 
             } catch (ClientException $e) {
 
@@ -309,20 +298,19 @@ class PassportConnect
     }
 
     /**
-     * obtiene la uri actual
-     *
-     * @return String
+     * Get the current uri
+     * @return string
      */
     public function getUri()
     {
-        $dominio = $_SERVER['HTTP_HOST'];
+        $domain = $_SERVER['HTTP_HOST'];
         $uri = $_SERVER['REQUEST_URI'];
-        $protocolo = 'http://';
+        $protocol = 'http://';
 
         if (isset($_SERVER['HTTPS'])) {
-            $protocolo = 'https://';
+            $protocol = 'https://';
         }
 
-        return $protocolo . $dominio . $uri;
+        return $protocol . $domain . $uri;
     }
 }
