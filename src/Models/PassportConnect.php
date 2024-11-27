@@ -167,7 +167,7 @@ class PassportConnect
                 )
             ));
         }
-        return $response->sendHeaders();
+        return $response;
     }
 
 
