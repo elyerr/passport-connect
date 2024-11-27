@@ -35,7 +35,7 @@ class Authorization extends PassportConnect
         } catch (RequestException $e) {
             if ($e->getResponse()->getStatusCode() == 401) {
                 try {
-                    return $this->isNotAuthenticable($request, $e->getResponse());
+                    return $this->isNotAuthenticatable($request, $e->getResponse());
                 } catch (ServerException $e) {
                     throw new ReportError("Can't update credentials", 401);
                 }

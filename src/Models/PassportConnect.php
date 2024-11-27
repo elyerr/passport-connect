@@ -19,14 +19,14 @@ class PassportConnect
     use Config;
 
     /**
-     * Token JWT 
+     * Token JWT
      * @var string
      */
     public $jwt_token;
 
     /**
      * Refresh token to update credentials
-     * @var 
+     * @var
      */
     public $jwt_refresh;
 
@@ -38,7 +38,7 @@ class PassportConnect
     protected $encrypter;
 
     /**
-     * Guzzle 
+     * Guzzle
      *
      * @var \GuzzleHttp\Client
      */
@@ -98,22 +98,20 @@ class PassportConnect
 
     /**
      * Create a new cookie
-     * @param string $name
-     * @param string $value
-     * @param int $timeExpires
-     * @param bool $http_only
-     * @return Cookie|\Illuminate\Cookie\CookieJar
+     * @param mixed $name
+     * @param mixed $value
+     * @param mixed $timeExpires
+     * @param mixed $http_only
+     * @return Cookie
      */
     public function storeCookie($name, $value, $timeExpires, $http_only = true)
     {
-        $host = $this->env()->cookie->domain ? $this->env()->cookie->domain : $_SERVER['HTTP_HOST'];
-
         return Cookie(
             $name,
             $value,
             $timeExpires,
             $this->env()->cookie->path,
-            $host,
+            $this->env()->cookie->domain,
             $this->env()->cookie->secure,
             $http_only,
             false,
@@ -122,13 +120,13 @@ class PassportConnect
     }
 
     /**
-     * Encrypt the cookies and sent to the user 
+     * Encrypt the cookies and sent to the user
      * @param mixed $cookies
      * @return mixed
      */
     public function encrypt($cookies)
     {
-        $response = new Response(null, 201);
+        $response = new Response();
 
         if (is_array($cookies)) {
             foreach ($cookies as $cookie) {
@@ -152,23 +150,23 @@ class PassportConnect
                     ));
                 }
             }
-        }
+        } else {
+            //There is not an array
+            if ($cookies->getName() == $this->jwt_token) {
+                return $response->withCookie($cookies);
+            }
 
-        //There is not an array
-        if ($cookies->getName() == $this->jwt_token) {
-            return $response->withCookie($cookies);
+            $response->withCookie($this->duplicate(
+                $cookies,
+                $this->encrypter->encrypt(
+                    CookieValuePrefix::create(
+                        $cookies->getName(),
+                        $this->encrypter->getKey()
+                    ) . $cookies->getValue(),
+                    EncryptCookies::serialized($cookies->getName())
+                )
+            ));
         }
-
-        $response->withCookie($this->duplicate(
-            $cookies,
-            $this->encrypter->encrypt(
-                CookieValuePrefix::create(
-                    $cookies->getName(),
-                    $this->encrypter->getKey()
-                ) . $cookies->getValue(),
-                EncryptCookies::serialized($cookies->getName())
-            )
-        ));
         return $response->sendHeaders();
     }
 
@@ -191,7 +189,7 @@ class PassportConnect
 
 
     /**
-     * Search credentials 
+     * Search credentials
      * @param \Illuminate\Http\Request $request
      * @return array
      */
@@ -258,18 +256,17 @@ class PassportConnect
     }
 
     /**
-     * Checking the authentication
+     * Checking authentication
      * @param mixed $request
      * @param mixed $response
      * @throws \Elyerr\ApiResponse\Exceptions\ReportError
-     * @return Response|\Illuminate\Http\RedirectResponse
+     * @return mixed
      */
-    public function isNotAuthenticable($request, $response)
+    public function isNotAuthenticatable($request, $response)
     {
         if ($response->getStatusCode() == 401) {
 
             try {
-
                 $credentials = $this->renewCredentials($request);
 
                 if (count($credentials) == 0) {
@@ -279,7 +276,7 @@ class PassportConnect
                 $response = $this->encrypt($credentials);
 
                 if (!$request->wantsJson()) {
-                    $response->headers->set('Location', $this->getUri());
+                    $response->headers->set('Location', $this->env()->host);
                     $response->setStatusCode(302);
                     return $response->send();
                 }
@@ -295,22 +292,5 @@ class PassportConnect
                 return redirect($this->env()->login);
             }
         }
-    }
-
-    /**
-     * Get the current uri
-     * @return string
-     */
-    public function getUri()
-    {
-        $domain = $_SERVER['HTTP_HOST'];
-        $uri = $_SERVER['REQUEST_URI'];
-        $protocol = 'http://';
-
-        if (isset($_SERVER['HTTPS'])) {
-            $protocol = 'https://';
-        }
-
-        return $protocol . $domain . $uri;
     }
 }
