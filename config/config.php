@@ -10,10 +10,34 @@ return [
     'host' => env('APP_URL'),
 
     /**
-     *  Server URL AOTUH 2
+     * Determines whether the application behaves as an internal module or a third-party app.
+     */
+    'module' => env('PASSPORT_MODULE', false),
+
+    /**
+     * OAuth2 Server URL
      */
     'server' => env('PASSPORT_SERVER'),
 
+    /**
+     * These cookie names are required if the application is on the same domain.
+     * When you add these names, the app will behave as a module rather than a 
+     * third-party application.
+     */
+    'server_cookie_names' => explode(',', env('PASSPORT_MODULE_COOKIES_NAMES')),
+
+    /**
+     * Redirect page after login
+     */
+    'redirect_after_login' => env('PASSPORT_REDIRECT_TO', '/'),
+
+    /**
+     * Login route
+     */
+    'login' => env('PASSPORT_LOGIN_TO', '/login'),
+
+    //------------------------------THIRD APPLICATION ---------------------------
+    // These credentials are required only if the app is on a different domain.
 
     /**
      * Client ID generated on the OAUTH 2 Server
@@ -35,30 +59,19 @@ return [
     'scopes' => env('PASSPORT_CLIENT_SCOPES', '*'),
 
     /**
-      * Name of cookies to save token jwt and refresh token
-      */
-    'ids' => [
-        'jwt_token' => env('PASSPORT_TOKEN', Str::slug(env('APP_NAME', 'passport'), '_') . '_outh2_server'),
-        'jwt_refresh' => env('PASSPORT_REFRESH', Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_outh2_server'),
-    ],
-
-    /**
-     * Login route
+     * Name of cookies to save token jwt and refresh token
      */
-    'login' => env('PASSPORT_LOGIN_TO', '/login'),
+    'jwt_token' => env('PASSPORT_TOKEN', Str::slug(env('APP_NAME', 'passport'), '_') . '_oauth_server'),
+    'jwt_refresh' => env('PASSPORT_REFRESH', Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_oauth_server'),
 
-    /**
-     * Redirect paga after login
-     */
-    'redirect_after_login' => env('PASSPORT_REDIRECT_TO', '/'),
 
     /**
      * Set config for cookies to OAUTH2 Server
      */
     'cookie' => [
         'path' => '/',
-        'domain' => env('PASSPORT_DOMAIN_SERVER'),
-        'time_expires' => env('PASSPORT_TIME_EXPIRES', 10),
+        'domain' => env('PASSPORT_DOMAIN_SERVER', null),
+        'time_expires' => env('PASSPORT_TIME_EXPIRES'),
         'secure' => env('PASSPORT_SECURE_COOKIE', true),
         'http_only' => env('PASSPORT_HTTP_ONLY_COOKIE', true),
         'same_site' => env('PASSPORT_SAME_SITE_COOKIE', 'lax'),

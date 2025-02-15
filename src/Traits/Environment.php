@@ -7,19 +7,6 @@ use Illuminate\Filesystem\Filesystem;
 
 trait Environment
 {
-    use Asset;
-
-    /**
-     * Add new environment server
-     * @return void
-     */
-    public function addEnvironmentServer()
-    {
-        $file = base_path('.env');
-
-        $this->addString($file, 8, "SERVER=\n");
-    }
-
     /**
      * Add error view to show errors
      * @return void
@@ -35,7 +22,6 @@ trait Environment
         }
 
         $fs->copy(__DIR__ . "/../../resources/views/error/report.blade.php", "$DIR/$FILE");
-
     }
 
     /**
@@ -57,6 +43,10 @@ trait Environment
      */
     public function addMiddleware()
     {
+        if (version_compare(app()->version(), '11.0.0', '>=')) {
+            return;
+        }
+
         $middlewares = [
             "'server' => \Elyerr\Passport\Connect\Middleware\Authorization::class",
             "'scope' => \Elyerr\Passport\Connect\Middleware\CheckForAnyScope::class",

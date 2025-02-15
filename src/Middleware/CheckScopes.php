@@ -3,15 +3,15 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Models\PassportConnect;
-use GuzzleHttp\Exception\RequestException;
-use GuzzleHttp\Exception\ServerException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Elyerr\Passport\Connect\Traits\Credentials;
 
-class CheckScopes extends PassportConnect
+class CheckScopes
 {
+    use Credentials;
     /**
      * Checking credential and all scopes for the user
      * @param \Illuminate\Http\Request $request
@@ -23,13 +23,11 @@ class CheckScopes extends PassportConnect
     public function handle(Request $request, Closure $next, $scopes)
     {
         $credentials = $this->credentials($request);
-        $credentials['Scopes'] = $scopes;
+        $credentials['headers']['X-SCOPES'] = $scopes;
 
         try {
-            $response = $this->http
-                ->get($this->env()->server . '/api/gateway/check-scopes', [
-                    'headers' => $credentials,
-                ]);
+            $response = $this->client()
+                ->get($this->env()->server . '/api/gateway/check-scopes', $credentials);
 
             if ($response->getStatusCode() == 200) {
                 return $next($request);
@@ -38,11 +36,21 @@ class CheckScopes extends PassportConnect
             $this->report($response);
 
         } catch (RequestException $e) {
-            if ($e->hasResponse() && $e->getResponse()->getStatusCode() == 401) {
+            if ($e->getResponse()->getStatusCode() == 401) {
+
                 try {
-                    return $this->isNotAuthenticatable($request, $e->getResponse());
+                    $credentials = $this->renewCredentials($request);
+
+                    $response = $next($request);
+
+                    foreach ($credentials as $cookie) {
+                        $response->headers->setCookie($cookie);
+                    }
+
+                    return $response;
+
                 } catch (ServerException $e) {
-                    throw new ReportError("Can't update credentials", 401);
+                    throw new ReportError("unauthorize", 401);
                 }
             }
         }

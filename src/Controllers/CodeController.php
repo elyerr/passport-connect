@@ -5,6 +5,7 @@ namespace Elyerr\Passport\Connect\Controllers;
 use Elyerr\ApiResponse\Exceptions\ReportError;
 use Elyerr\Passport\Connect\Models\PassportConnect;
 use Elyerr\Passport\Connect\Traits\Config;
+use Elyerr\Passport\Connect\Traits\Credentials;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -14,22 +15,17 @@ use view;
 
 class CodeController extends Controller
 {
-    use Config;
+    use Credentials;
 
-    /**
-     * @var PassportConnect
-     */
-    protected $passportConnect;
+
 
     /**
      * Constructor
-     *
-     * @param PassportConnect $passportConnect
+     * 
      */
-    public function __construct(PassportConnect $passportConnect)
+    public function __construct()
     {
         $this->middleware('guest');
-        $this->passportConnect = $passportConnect;
     }
 
     /**
@@ -38,7 +34,7 @@ class CodeController extends Controller
      */
     public function login()
     {
-        return view('auth');
+        return view(view: 'auth');
     }
 
     /**
@@ -48,15 +44,28 @@ class CodeController extends Controller
      */
     public function redirect(Request $request)
     {
+
+        if ($this->env()->module) {
+            $query = http_build_query([
+                'redirect_to' => "{$this->env()->host}/{$this->env()->redirect_after_login}",
+                'module' => true
+            ]);
+
+            return redirect("{$this->env()->server}/login?{$query}");
+        }
+
         $request->session()->put('state', $state = Str::random(40));
 
         $request->session()->put(
-            'code_verifier', $code_verifier = Str::random(128)
+            'code_verifier',
+            $code_verifier = Str::random(128)
         );
 
         $codeChallenge = strtr(rtrim(
             base64_encode(hash('sha256', $code_verifier, true))
-            , '='), '+/', '-_');
+            ,
+            '='
+        ), '+/', '-_');
 
         //Query options to generate a code 
         $query = http_build_query([
@@ -77,7 +86,7 @@ class CodeController extends Controller
      * Make a requests to the oauth 2 server using the code to generate valid credentials
      * @param \Illuminate\Http\Request $request
      * @throws \Elyerr\ApiResponse\Exceptions\ReportError
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function callback(Request $request)
     {
@@ -87,11 +96,12 @@ class CodeController extends Controller
 
         throw_unless(
             strlen($state) > 0 && $state === $request->state,
-            new ReportError("Can't find the session", 400)
+            new ReportError("Can't find the session", 404)
         );
+
         try {
 
-            $response_guzzle = $this->passportConnect->http
+            $response = $this->client()
                 ->post($this->env()->server . '/api/oauth/token', [
                     'form_params' => [
                         'grant_type' => 'authorization_code',
@@ -102,25 +112,13 @@ class CodeController extends Controller
                     ],
                 ]);
         } catch (ClientException $e) {
-            throw new ReportError(__('Unauthenticated user'), 401);
+            throw new ReportError(__('Unauthenticated'), 401);
         }
 
-        $body = $response_guzzle->getBody()->getContents();
-        $data = json_decode($body);
+        $cookies = $this->generateCredentials($response);
 
-        $access_token = $data->access_token;
-        $refresh_token = $data->refresh_token;
-        $expires_in = $data->expires_in;
+        $redirect_to = "{$this->env()->host}/{$this->env()->redirect_after_login}";
 
-        $cookies = [
-            $this->passportConnect->storeCookie($this->passportConnect->jwt_token, $access_token, ($expires_in / 60)),
-            $this->passportConnect->storeCookie($this->passportConnect->jwt_refresh, $refresh_token, (30 * 24 * 60)),
-        ];
-
-        $response = $this->passportConnect->encrypt($cookies);
-
-        $response->headers->set('Location', $this->env()->redirect_after_login);
-        $response->setStatusCode(Response::HTTP_FOUND);
-        return $response->send();
+        return redirect($redirect_to)->withCookies($cookies);
     }
 }

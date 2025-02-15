@@ -19,7 +19,7 @@ class ClientConsole extends Command
      *
      * @var string
      */
-    protected $signature = "passport-connect:client-public";
+    protected $signature = "passport-connect:install";
 
     /**
      * The console command description.
@@ -42,7 +42,6 @@ class ClientConsole extends Command
      */
     public function handle()
     {
-        $this->addEnvironmentServer();
         $this->addEnvironmentKey();
         $this->addErrorView();
         $this->addAuthView();
@@ -118,5 +117,50 @@ class ClientConsole extends Command
                 $index += 1;
             }
         }
+    }
+
+    /**
+     * Add string
+     * @param mixed $file
+     * @param mixed $index
+     * @param mixed $value
+     * @param mixed $replace
+     * @param mixed $repeat
+     * @return void
+     */
+    public function addString($file, $index, $value, $replace = 0, $repeat = false)
+    {
+        $lines = $this->fileToArray($file);
+
+        if (!$repeat and strpos(file_get_contents($file), $value) === false) {
+
+            array_splice($lines, $index, $replace, $value);
+
+        } elseif ($repeat) {
+            array_splice($lines, $index, $replace, $value);
+        }
+        file_put_contents($file, $lines);
+    }
+
+    /**
+     * Transform any file in array collection
+     * @param mixed $file
+     * @return array
+     */
+    public function fileToArray($file)
+    {
+        $readFile = fopen($file, 'r');
+
+        $lines = [];
+
+        if ($readFile) {
+            while (!feof($readFile)) {
+                $line = fgets($readFile);
+                array_push($lines, $line);
+            }
+            fclose($readFile);
+        }
+
+        return $lines;
     }
 }

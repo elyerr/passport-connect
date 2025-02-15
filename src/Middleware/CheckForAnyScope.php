@@ -7,10 +7,11 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Exception\RequestException;
 use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Models\PassportConnect;
+use Elyerr\Passport\Connect\Traits\Credentials;
 
-class CheckForAnyScope extends PassportConnect
+class CheckForAnyScope
 {
+    use Credentials;
     /**
      * Checking credentials and any scopes 
      * @param \Illuminate\Http\Request $request
@@ -22,13 +23,10 @@ class CheckForAnyScope extends PassportConnect
     public function handle(Request $request, Closure $next, $scopes)
     {
         $credentials = $this->credentials($request);
-        $credentials['Scopes'] = $scopes;
-
+        $credentials['headers']['X-SCOPES'] = $scopes;
         try {
-            $response = $this->http
-                ->request('GET', $this->env()->server . '/api/gateway/check-scope', [
-                    'headers' => $credentials,
-                ]);
+            $response = $this->client()
+                ->request('GET', $this->env()->server . '/api/gateway/check-scope', $credentials);
 
             if ($response->getStatusCode() == 200) {
                 return $next($request);
@@ -37,11 +35,21 @@ class CheckForAnyScope extends PassportConnect
             $this->report($response);
 
         } catch (RequestException $e) {
-            if ($e->hasResponse() && $e->getResponse()->getStatusCode() == 401) {
+            if ($e->getResponse()->getStatusCode() == 401) {
+
                 try {
-                    return $this->isNotAuthenticatable($request, $e->getResponse());
+                    $credentials = $this->renewCredentials($request);
+
+                    $response = $next($request);
+
+                    foreach ($credentials as $cookie) {
+                        $response->headers->setCookie($cookie);
+                    }
+
+                    return $response;
+
                 } catch (ServerException $e) {
-                    throw new ReportError("Can't update credentials", 401);
+                    throw new ReportError("unauthorize", 401);
                 }
             }
         }

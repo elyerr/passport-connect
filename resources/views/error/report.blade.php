@@ -1,46 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('app.name') }}</title>
-    <!-- Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous">
-    </script>
-
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body class="font-sans">
+<body class="font-sans bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-lg p-10 w-full max-w-lg">
+        <div class="text-center">
+            @if (isset($code))
+                <h1 class="text-5xl font-extrabold text-gray-800 mb-4">{{ $code }}</h1>
+            @endif
 
-    <div class="container">
-        <div class="card mt-5">
-            <div class="card-head mb-5 text-center fw-bold h1 text-secondary">
-                @if (isset($code))
-                    <span>{{ $code }}</span>
-                @endif
-            </div>
-            <div class="card-body text-center mt-5">
-                <div class="mb-2">
-                    @if (isset($message))
-                        <span>{{ $message }}</span>
-                    @endif
-                </div>
-                <div class="mt-5">
-                    @if (isset($code) && $code == 401)
-                        <form action="/login" method="GET">
-                            <button type="submit" class="btn btn-primary">
-                            {{ __('Go to the login')}}
-                            </button>
-                        </form>
-                    @endif
-                </div>
-            </div>
+            @if (isset($message))
+                <p class="text-gray-600 mb-6">{{ $message }}</p>
+            @endif
+
+            @if (isset($code) && $code == 401)
+                <form action="/login" method="GET">
+                    <button type="submit"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300">
+                        {{ __('Go to the login') }}
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 </body>
-
 </html>

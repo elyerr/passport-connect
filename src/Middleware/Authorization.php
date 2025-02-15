@@ -3,29 +3,29 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Models\PassportConnect;
-use GuzzleHttp\Exception\RequestException;
+use Illuminate\Http\Request;
 use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Exception\RequestException;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Elyerr\Passport\Connect\Traits\Credentials;
 
-class Authorization extends PassportConnect
-{   
+class Authorization
+{
+    use Credentials;
+
     /**
-     * Checking the credentials is valid
-     * @param mixed $request
+     * Basic authentication 
+     * @param \Illuminate\Http\Request $request
      * @param \Closure $next
      * @throws \Elyerr\ApiResponse\Exceptions\ReportError
-     * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         $credentials = $this->credentials($request);
 
         try {
-            $response = $this->http
-                ->request('GET', $this->env()->server . '/api/gateway/check-authentication', [
-                    'headers' => $credentials,
-                ]);
+            $response = $this->client()
+                ->request('GET', $this->env()->server . '/api/gateway/check-authentication', $credentials);
 
             $this->report($response);
 
@@ -33,11 +33,22 @@ class Authorization extends PassportConnect
                 return $next($request);
             }
         } catch (RequestException $e) {
+
             if ($e->getResponse()->getStatusCode() == 401) {
+
                 try {
-                    return $this->isNotAuthenticatable($request, $e->getResponse());
+                    $credentials = $this->renewCredentials($request);
+
+                    $response = $next($request);
+
+                    foreach ($credentials as $cookie) {
+                        $response->headers->setCookie($cookie);
+                    }
+
+                    return $response;
+
                 } catch (ServerException $e) {
-                    throw new ReportError("Can't update credentials", 401);
+                    throw new ReportError("unauthorize", 401);
                 }
             }
         }

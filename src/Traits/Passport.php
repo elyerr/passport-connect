@@ -2,24 +2,14 @@
 
 namespace Elyerr\Passport\Connect\Traits;
 
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Config;
-use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use GuzzleHttp\Exception\ClientException;
+use Elyerr\ApiResponse\Exceptions\ReportError;
+use Elyerr\Passport\Connect\Traits\Credentials;
 
 trait Passport
 {
-
-    use Config;
-
-    /**
-     * Guzzle instances
-     * @return Client
-     */
-    public function client()
-    {
-        return new Client(['verify' => false]);
-    }
+    use Credentials;
 
     /**
      * Checking the scope for current user
@@ -28,27 +18,22 @@ trait Passport
      */
     public function userCan($scope)
     {
-        $request = request();
-        $cookie = $request->cookie($this->env()->ids->jwt_token);
+        $credentials = $this->credentials(request());
+        $credentials['headers']['X-SCOPE'] = $scope;
 
         try {
-
-            $this->client()
-                ->get($this->env()->server . '/api/gateway/token-can', [
-                    'headers' => [
-                        'X-SCOPE' => $scope,
-                        'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
-                    ],
-                ]);
-
-            return true;
+            $response = $this->client()->get($this->env()->server . '/api/gateway/token-can', $credentials);
+            if ($response->getStatusCode() === 200) {
+                return true;
+            }
 
         } catch (ClientException $e) {
-            
+
             throw_unless($e->getCode() === 403, new ReportError($e->getMessage(), $e->getCode()));
 
             return false;
         }
+        return false;
     }
 
     /**
@@ -58,17 +43,11 @@ trait Passport
      */
     public function user()
     {
-        $request = request();
-        $cookie = $request->cookie($this->env()->ids->jwt_token);
+        $credentials = $this->credentials(request());
 
         try {
 
-            $response = $this->client()
-                ->get($this->env()->server . '/api/gateway/user', [
-                    'headers' => [
-                        'Authorization' => $cookie ? "Bearer $cookie" : $request->header('Authorization'),
-                    ],
-                ]);
+            $response = $this->client()->get($this->env()->server . '/api/gateway/user', $credentials);
 
             throw_unless($response->getStatusCode() === 200, new ReportError($response->getBody(), $response->getStatusCode()));
 
@@ -81,28 +60,29 @@ trait Passport
     }
 
     /**
-     * Send notifications
-     * @param array $form
-     * @return bool
+     *  Logout session  
+     * @param \Illuminate\Http\Request $request
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
      */
-    public function send_notification(array $form)
+    public function logout(Request $request)
     {
-        $request = request();
-        $cookie = $request->cookie($this->env()->ids->jwt_token);
+        $credentials = $this->credentials($request);
 
+        $logoutEndpoint = $this->env()->module
+            ? $this->env()->server . '/logout'
+            : $this->env()->server . '/api/gateway/logout';
+            
         try {
-            $this->client()
-                ->post($this->env()
-                        ->server . '/api/gateway/send-notification', [
-                        'headers' => [
-                            'X-VERIFY-NOTIFICATION' => $this->env()->verify_notification,
-                            'Authorization' => $cookie ? "Bearer $cookie" : $request->header,
-                        ],
-                        'form_params' => $form,
-                    ]);
-            return true;
+            $response = $this->client()->post($logoutEndpoint, $credentials);
+
+            throw_unless(
+                $response->getStatusCode() === 200,
+                new ReportError($response->getBody(), $response->getStatusCode())
+            );
+
+            return json_decode($response->getBody());
         } catch (ClientException $e) {
-            return false;
+            throw new ReportError($e->getMessage(), $e->getCode());
         }
     }
 }
