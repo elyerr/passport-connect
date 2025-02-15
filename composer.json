@@ -1,33 +1,32 @@
 {
-    "name": "elyerr/passport-connect",
-    "description": "Permite conectar microservicios a traves de outh2-passport-server facilmente",
-    "type": "library",
-    "license": "GPL-3.0",
-    "extra": {
-        "laravel": {
-            "providers": [
-                "Elyerr\\Passport\\Connect\\ServiceProvider"
-            ]
-        }
-    },
-    "autoload": {
-        "psr-4": {
-            "Elyerr\\Passport\\Connect\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Elvis  Yerel Roman Concha",
-            "email": "yerel9212@yahoo.es"
-        }
-    ],
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "require": {
-        "elyerr/api-response": "^1.0",
-        "guzzlehttp/guzzle": "^7.8"
-    },
-    "require-dev": {
-        "laravel/framework": "^10.38"
+  "name": "elyerr/passport-connect",
+  "description": "Easily connect microservices through an OAuth2 Passport server.",
+  "type": "library",
+  "license": "GPL-3.0",
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Elyerr\\Passport\\Connect\\ServiceProvider"
+      ]
     }
+  },
+  "autoload": {
+    "psr-4": {
+      "Elyerr\\Passport\\Connect\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Elvis  Yerel Roman Concha",
+      "email": "yerel9212@yahoo.es"
+    }
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "guzzlehttp/guzzle": "^7.8"
+  },
+  "require-dev": {
+    "laravel/framework": "^10.38"
+  }
 }
