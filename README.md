@@ -243,10 +243,10 @@ PASSPORT_HTTP_ONLY_COOKIE=true
 PASSPORT_SAME_SITE_COOKIE (Same-Site Policy)
 Controls cross-site cookie behavior. Acceptable values:
 
-    **lax**: Allows cookies with top-level navigation.
-    **strict**: Prevents all cross-site cookies.
-    **none**: No restrictions (only use with secure cookies).
-    Example:
+**lax**: Allows cookies with top-level navigation.
+**strict**: Prevents all cross-site cookies.
+**none**: No restrictions (only use with secure cookies).
+Example:
 
 ```bash
 PASSPORT_SAME_SITE_COOKIE=lax
