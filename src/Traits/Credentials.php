@@ -27,7 +27,9 @@ trait Credentials
      */
     public function client()
     {
-        return new Client(['verify' => false]);
+        return new Client([
+            'verify' => false
+        ]);
     }
 
     /**
@@ -92,7 +94,6 @@ trait Credentials
         $data = [];
         $names = $this->env()->server_cookie_names;
         $cookies = request()->cookies->all();
-
         foreach ($names as $key) {
             if (isset($cookies[$key])) {
                 $data[$key] = $cookies[$key];
@@ -110,6 +111,7 @@ trait Credentials
     public function credentials(Request $request)
     {
         $data = [];
+        $data['headers']['Accept'] = 'Application/json';
 
         if (!$this->env()->module) {
             $token = $this->jwtToken($request) ?? $request->bearerToken();
@@ -124,7 +126,7 @@ trait Credentials
             if (!empty($cookies)) {
                 $data['cookies'] = CookieJar::fromArray(
                     $cookies,
-                    parse_url($this->env()->server, PHP_URL_HOST)
+                    $this->env()->domain
                 );
             }
         }
