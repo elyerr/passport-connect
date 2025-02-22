@@ -5,6 +5,13 @@ use Illuminate\Support\Str;
 return [
 
     /**
+     * Master domain 
+     * Domain host where the server_cookie_names are created.
+     * Used for authentication with module is true.
+     */
+    'domain' => env('PASSPORT_MASTER_DOMAIN', null),
+
+    /**
      * Host
      */
     'host' => env('APP_URL'),
