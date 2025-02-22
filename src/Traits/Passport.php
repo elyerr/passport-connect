@@ -60,7 +60,7 @@ trait Passport
     }
 
     /**
-     *  Logout session  
+     *  Logout session only when the module is false.
      * @param \Illuminate\Http\Request $request
      * @throws \Elyerr\ApiResponse\Exceptions\ReportError
      */
@@ -68,10 +68,8 @@ trait Passport
     {
         $credentials = $this->credentials($request);
 
-        $logoutEndpoint = $this->env()->module
-            ? $this->env()->server . '/logout'
-            : $this->env()->server . '/api/gateway/logout';
-            
+        $logoutEndpoint = $this->env()->server . '/api/gateway/logout';
+
         try {
             $response = $this->client()->post($logoutEndpoint, $credentials);
 
