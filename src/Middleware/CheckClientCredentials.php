@@ -37,7 +37,7 @@ class CheckClientCredentials
             $this->report($response);
 
         } catch (RequestException $e) {
-            if ($e->getResponse()->getStatusCode() == 401) {
+            if (!$this->env()->module && $e->getResponse()->getStatusCode() == 401) {
 
                 try {
                     $credentials = $this->renewCredentials($request);
@@ -55,5 +55,6 @@ class CheckClientCredentials
                 }
             }
         }
+        throw new ReportError("unauthorize", 401);
     }
 }
