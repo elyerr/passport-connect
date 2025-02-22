@@ -103,13 +103,20 @@ Each middleware can be used like any other Laravel middleware by passing paramet
 
 The following environment variables are essential for configuring the application’s behavior as either an internal module or a third-party application when connected to the OAuth2 Passport Server:
 
+- PASSPORT_MASTER_DOMAIN
+  This is for the master domain and is only required when the module is set to true.
+
+````
+PASSPORT_MASTER_DOMAIN=".elyerr.xyz"
+̣̣```
+
 - APP_URL (Host)
   Defines the host of the application. This should match the base URL of your app, typically defined in the .env file.
   Example:
 
 ```bash
 APP_URL=https://example.com
-```
+````
 
 - PASSPORT_MODULE (Module Behavior)
   Determines whether the application behaves as an internal module (when set to true) or as a third-party app (false).
@@ -267,6 +274,9 @@ These variables ensure secure and flexible integration with the OAuth2 Passport 
 The following environment variables configure the application to behave as an internal module when integrated with the OAuth2 Passport Server. **This configuration is only applicable when the application is on the same domain as the OAuth2 Passport Server**:
 
 ```bash
+#Master domain
+PASSPORT_MASTER_DOMAIN=".elyerr.xyz"
+
 # OAuth2 Server URL
 PASSPORT_SERVER=https://auth.elyerr.xyz
 
@@ -334,7 +344,8 @@ To enhance the application's functionality, you can use the `Elyerr\Passport\Con
   Returns the authenticated user's information, including any relevant details for authorization.
 
 - **logout()**:
-  Logs out the authenticated user, terminating their session.
+  Logs out the authenticated user, terminating their session only in the third-party application.
+  When using module mode, the logout request must be directed to the authorization server's logout route, e.g., `https://master.elyerr.xyz/logout`.
 
 These methods make it easier to manage user permissions, retrieve user details, and handle session management efficiently.
 
