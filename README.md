@@ -293,6 +293,21 @@ PASSPORT_LOGIN_TO="login"
 PASSPORT_MODULE=true
 ```
 
+And add this section into the `EncryptCookies` middleware and import 
+`use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;`
+```bash
+ public function __construct(EncrypterContract $encrypter)
+    {
+        parent::__construct($encrypter);
+
+        $passport = config('passport_connect.server_cookie_names');
+        $this->except = array(
+            ...$this->except,
+            ...$passport
+        );
+    }
+```
+
 ## Example Configuration for Third-Party Applications
 
 The following environment variables configure the application to behave as a third-party application when connecting to the OAuth2 Passport Server:
