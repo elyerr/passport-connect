@@ -54,8 +54,11 @@ trait Passport
             return json_decode($response->getBody());
 
         } catch (ClientException $e) {
+            if (!$this->isProduction()) {
+                throw new ReportError("Request error: " . $e->getMessage(), $e->getCode());
+            }
 
-            throw new ReportError($e->getMessage(), $e->getCode());
+            throw new ReportError(__("Unable to retrieve user information."), 500);
         }
     }
 
@@ -80,7 +83,11 @@ trait Passport
 
             return json_decode($response->getBody());
         } catch (ClientException $e) {
-            throw new ReportError($e->getMessage(), $e->getCode());
+            if (!$this->isProduction()) {
+                throw new ReportError("Logout request error: " . $e->getMessage(), $e->getCode());
+            }
+
+            throw new ReportError("Logout process failed. Please try again.", 500);
         }
     }
 }

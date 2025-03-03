@@ -75,17 +75,6 @@ trait Credentials
         return $this->getCookie($request, $this->env()->jwt_token);
     }
 
-
-    /**
-     * Retrieve the refresh token
-     * @param \Illuminate\Http\Request $request
-     * @return string|null
-     */
-    public function jwtRefresh(Request $request)
-    {
-        return $this->getCookie($request, $this->env()->jwt_refresh) ?? null;
-    }
-
     /**
      * Get the credential name of Oauth2 server
      */
@@ -188,35 +177,9 @@ trait Credentials
     }
 
     /**
-     * Generate new credentials
-     * @param \Illuminate\Http\Request $request
-     * @return Cookie[]
-     */
-    public function renewCredentials(Request $request)
-    {
-        try {
-
-            $form = [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => $this->jwtRefresh($request),
-                'client_id' => $this->env()->server_id,
-            ];
-
-            $response = $this->client()
-                ->request('POST', $this->env()->server . '/api/oauth/token', [
-                    'form_params' => $form,
-                ]);
-            return $this->generateCredentials($response);
-
-        } catch (ClientException $th) {
-            return [];
-        }
-    }
-
-    /**
      * Generate credential token and refresh token to regenerate credentials
      * @param \Psr\Http\Message\ResponseInterface $response
-     * @return Cookie[]
+     * @return Cookie
      */
     public function generateCredentials(ResponseInterface $response)
     {
@@ -224,23 +187,17 @@ trait Credentials
         $data = json_decode($body);
 
         $access_token = $data->access_token;
-        $refresh_token = $data->refresh_token;
         $expires_in = $data->expires_in;
 
-        return [
-            $this->storeCookie($this->env()->jwt_token, $access_token, $expires_in),
-            $this->storeCookie($this->env()->jwt_refresh, $refresh_token, $expires_in + (60 * 60 * 24)),
-        ];
+        return $this->storeCookie($this->env()->jwt_token, $access_token, $expires_in);
     }
 
     /**
-     * Replace the cookie in the response
-     * @param \Symfony\Component\HttpFoundation\Cookie $cookie
-     * @param mixed $value
-     * @return Cookie|\Illuminate\Cookie\CookieJar
+     * Check the production mode for laravel applications
+     * @return bool|string
      */
-    protected function duplicate(Cookie $cookie, $value)
+    public function isProduction()
     {
-        return $this->storeCookie($cookie->getName(), $value, $cookie->getExpiresTime());
+        return app()->environment('production');
     }
 }

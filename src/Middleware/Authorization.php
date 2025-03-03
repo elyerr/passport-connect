@@ -33,26 +33,18 @@ class Authorization
                 return $next($request);
             }
         } catch (RequestException $e) {
+            $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
-            if (!$this->env()->module && $e->getResponse()->getStatusCode() == 401) {
+            if ($statusCode === 401) {
+                throw new ReportError(__("Unauthorized access. Authentication failed."), 401);
+            }
 
-                try {
-                    $credentials = $this->renewCredentials($request);
-
-                    $response = $next($request);
-
-                    foreach ($credentials as $cookie) {
-                        $response->headers->setCookie($cookie);
-                    }
-
-                    return $response;
-
-                } catch (ServerException $e) {
-                    throw new ReportError("unauthorize", 401);
-                }
+            if (!$this->isProduction()) {
+                throw new ReportError("Request error: " . $e->getMessage(), $statusCode ?? 500);
             }
         }
-        throw new ReportError("unauthorize", 401);
+
+        throw new ReportError(__("Unauthorized access. Authentication is required."), 401);
     }
 
 }

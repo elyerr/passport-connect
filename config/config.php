@@ -69,8 +69,6 @@ return [
      * Name of cookies to save token jwt and refresh token
      */
     'jwt_token' => env('PASSPORT_TOKEN', Str::slug(env('APP_NAME', 'passport'), '_') . '_oauth_server'),
-    'jwt_refresh' => env('PASSPORT_REFRESH', Str::slug(env('APP_NAME', 'passport'), '_') . '_refresh_oauth_server'),
-
 
     /**
      * Set config for cookies to OAUTH2 Server

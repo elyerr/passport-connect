@@ -17,8 +17,6 @@ class CodeController extends Controller
 {
     use Credentials;
 
-
-
     /**
      * Constructor
      * 
@@ -115,10 +113,10 @@ class CodeController extends Controller
             throw new ReportError(__('Unauthenticated'), 401);
         }
 
-        $cookies = $this->generateCredentials($response);
+        $jwtToken = $this->generateCredentials($response);
 
         $redirect_to = "{$this->env()->host}/{$this->env()->redirect_after_login}";
 
-        return redirect($redirect_to)->withCookies($cookies);
+        return redirect($redirect_to)->withCookie($jwtToken);
     }
 }

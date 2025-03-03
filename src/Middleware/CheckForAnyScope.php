@@ -35,24 +35,17 @@ class CheckForAnyScope
             $this->report($response);
 
         } catch (RequestException $e) {
-            if (!$this->env()->module && $e->getResponse()->getStatusCode() == 401) {
+            $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
-                try {
-                    $credentials = $this->renewCredentials($request);
+            if ($statusCode === 401) {
+                throw new ReportError(__("Unauthorized access. Authentication failed."), 401);
+            }
 
-                    $response = $next($request);
-
-                    foreach ($credentials as $cookie) {
-                        $response->headers->setCookie($cookie);
-                    }
-
-                    return $response;
-
-                } catch (ServerException $e) {
-                    throw new ReportError("unauthorize", 401);
-                }
+            if (!$this->isProduction()) {
+                throw new ReportError("Request error: " . $e->getMessage(), $statusCode ?? 500);
             }
         }
-        throw new ReportError("unauthorize", 401);
+
+        throw new ReportError(__("Unauthorized access. Authentication is required."), 401);
     }
 }
