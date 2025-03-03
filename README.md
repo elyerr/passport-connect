@@ -106,9 +106,9 @@ The following environment variables are essential for configuring the applicatio
 - PASSPORT_MASTER_DOMAIN
   This is for the master domain and is only required when the module is set to true.
 
-````
+```bash
 PASSPORT_MASTER_DOMAIN=".elyerr.xyz"
-̣̣```
+```
 
 - APP_URL (Host)
   Defines the host of the application. This should match the base URL of your app, typically defined in the .env file.
@@ -116,7 +116,7 @@ PASSPORT_MASTER_DOMAIN=".elyerr.xyz"
 
 ```bash
 APP_URL=https://example.com
-````
+```
 
 - PASSPORT_MODULE (Module Behavior)
   Determines whether the application behaves as an internal module (when set to true) or as a third-party app (false).
@@ -269,6 +269,28 @@ PASSPORT_PARTITIONED_COOKIE=false
 
 These variables ensure secure and flexible integration with the OAuth2 Passport Server when the application is deployed on a different domain.
 
+## Excluding Cookies in EncryptCookies
+
+When working with Passport-based authentication, it is mandatory to avoid encoding or encrypting certain cookies used in the authentication process. This ensures that tokens and related data can be correctly read in each request.
+Required Configuration
+
+To exclude these cookies in the EncryptCookies middleware, add the following code to its constructor:
+
+```php
+public function __construct()
+{
+    $passport = [];
+    $passport = config('passport_connect.server_cookie_names');
+    $passport[] = config('passport_connect.jwt_token');
+
+    $this->except = array_merge(
+        ...$this->except,
+        ...$passport
+    );
+}
+```
+This configuration is essential to prevent authentication issues when validating sessions and tokens on the client side.
+
 ## Example Configuration for Module Mode
 
 The following environment variables configure the application to behave as an internal module when integrated with the OAuth2 Passport Server. **This configuration is only applicable when the application is on the same domain as the OAuth2 Passport Server**:
@@ -293,8 +315,9 @@ PASSPORT_LOGIN_TO="login"
 PASSPORT_MODULE=true
 ```
 
-And add this section into the `EncryptCookies` middleware and import 
+And add this section into the `EncryptCookies` middleware and import
 `use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;`
+
 ```bash
  public function __construct(EncrypterContract $encrypter)
     {
@@ -338,9 +361,8 @@ PASSPORT_PROMPT_MODE=consent
 # OAuth2 Passport Server domain for cookie settings
 PASSPORT_DOMAIN_SERVER="test.elyerr.xyz"
 
-# JWT token and refresh token cookie names
+# JWT token
 PASSPORT_TOKEN="app_token"
-PASSPORT_REFRESH="${PASSPORT_TOKEN}_refresh"
 
 # Secure cookie configurations
 PASSPORT_SECURE_COOKIE=true  # Ensures cookies are transmitted over HTTPS only
