@@ -283,7 +283,7 @@ public function __construct()
     $passport = config('passport_connect.server_cookie_names');
     $passport[] = config('passport_connect.jwt_token');
 
-    $this->except = array_merge(
+    $this->except = array(
         ...$this->except,
         ...$passport
     );
