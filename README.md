@@ -277,18 +277,21 @@ Required Configuration
 To exclude these cookies in the EncryptCookies middleware, add the following code to its constructor:
 
 ```php
-public function __construct()
-{
-    $passport = [];
-    $passport = config('passport_connect.server_cookie_names');
-    $passport[] = config('passport_connect.jwt_token');
+public function __construct(EncrypterContract $encrypter)
+    {
+        parent::__construct($encrypter);
 
-    $this->except = array(
-        ...$this->except,
-        ...$passport
-    );
-}
+        $passport = [];
+        $passport = config('passport_connect.server_cookie_names');
+        $passport[] = config('passport_connect.jwt_token');
+
+        $this->except = array(
+            ...$this->except,
+            ...$passport
+        );
+    }
 ```
+
 This configuration is essential to prevent authentication issues when validating sessions and tokens on the client side.
 
 ## Example Configuration for Module Mode
@@ -313,22 +316,6 @@ PASSPORT_LOGIN_TO="login"
 
 # Determines whether the application behaves as a module (false for third-party apps)
 PASSPORT_MODULE=true
-```
-
-And add this section into the `EncryptCookies` middleware and import
-`use Illuminate\Contracts\Encryption\Encrypter as EncrypterContract;`
-
-```bash
- public function __construct(EncrypterContract $encrypter)
-    {
-        parent::__construct($encrypter);
-
-        $passport = config('passport_connect.server_cookie_names');
-        $this->except = array(
-            ...$this->except,
-            ...$passport
-        );
-    }
 ```
 
 ## Example Configuration for Third-Party Applications
