@@ -90,4 +90,31 @@ trait Passport
             throw new ReportError("Logout process failed. Please try again.", 500);
         }
     }
+
+
+    /**
+     * Get the current user 
+     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * @return mixed
+     */
+    public function access()
+    {
+        $credentials = $this->credentials(request());
+
+        try {
+
+            $response = $this->client()->get($this->env()->server . '/api/gateway/access', $credentials);
+
+            if ($response->getStatusCode() === 200) {
+                return json_decode($response->getBody());
+            }
+
+        } catch (ClientException $e) {
+            if (!$this->isProduction()) {
+                throw new ReportError("Request error: " . $e->getMessage(), $e->getCode());
+            }
+
+            throw new ReportError(__("Unable to retrieve access information."), 500);
+        }
+    }
 }
