@@ -58,7 +58,7 @@ trait Passport
                 throw new ReportError("Request error: " . $e->getMessage(), $e->getCode());
             }
 
-            throw new ReportError(__("Unable to retrieve user information."), 500);
+            throw new ReportError(__("Unable to retrieve user information."), $e->getCode());
         }
     }
 
@@ -87,7 +87,7 @@ trait Passport
                 throw new ReportError("Logout request error: " . $e->getMessage(), $e->getCode());
             }
 
-            throw new ReportError("Logout process failed. Please try again.", 500);
+            throw new ReportError("Logout process failed. Please try again.", $e->getCode());
         }
     }
 
@@ -114,7 +114,11 @@ trait Passport
                 throw new ReportError("Request error: " . $e->getMessage(), $e->getCode());
             }
 
-            throw new ReportError(__("Unable to retrieve access information."), 500);
+            if ($this->isProduction() && $e->getCode() == 401) {
+                throw new ReportError(__("Unauthorized access. Authentication failed."), 401);
+            }
+
+            throw new ReportError(__("An unexpected error occurred. Please try again later."), $e->getCode());
         }
     }
 }
