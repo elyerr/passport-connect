@@ -17,14 +17,14 @@ class CheckClientCredentials
      * Checking credentials and client credentials
      * @param \Illuminate\Http\Request $request
      * @param \Closure $next
-     * @param mixed $scopes
+     * @param mixed ...$scopes
      * @throws \Elyerr\ApiResponse\Exceptions\ReportError
      * @return mixed
      */
-    public function handle(Request $request, Closure $next, $scopes)
+    public function handle(Request $request, Closure $next, ...$scopes)
     {
         $credentials = $this->credentials($request);
-        $credentials['headers']['X-SCOPES'] = $scopes;
+        $credentials['headers']['X-SCOPES'] = implode(',', $scopes);
 
         try {
             $response = $this->client()
