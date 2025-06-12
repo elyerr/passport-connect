@@ -3,11 +3,8 @@
 namespace Elyerr\Passport\Connect\Traits;
 
 use GuzzleHttp\Client;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use GuzzleHttp\Cookie\CookieJar;
-use Illuminate\Cookie\CookieValuePrefix;
-use GuzzleHttp\Exception\ClientException;
+use Illuminate\Http\Request; 
+use Illuminate\Cookie\CookieValuePrefix; 
 use Elyerr\Passport\Connect\Traits\Config;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\Cookie;
@@ -76,23 +73,6 @@ trait Credentials
     }
 
     /**
-     * Get the credential name of Oauth2 server
-     */
-    public function getServerCookies()
-    {
-        $data = [];
-        $names = $this->env()->server_cookie_names;
-        $cookies = request()->cookies->all();
-        foreach ($names as $key) {
-            if (isset($cookies[$key])) {
-                $data[$key] = $cookies[$key];
-            }
-        }
-
-        return $data;
-    }
-
-    /**
      * Get credentials Authorization header and cookies
      * @param \Illuminate\Http\Request $request
      * @return array<array<array|string|null>|string|null>
@@ -102,22 +82,10 @@ trait Credentials
         $data = [];
         $data['headers']['Accept'] = 'Application/json';
 
-        if (!$this->env()->module) {
-            $token = $this->jwtToken($request) ?? $request->bearerToken();
-
-            if (!empty($token)) {
-                $data['headers']['Authorization'] = str_contains('Bearer', $token) ? $token : "Bearer {$token}";
-            }
-
-        } else {
-            $cookies = $this->getServerCookies();
-
-            if (!empty($cookies)) {
-                $data['cookies'] = CookieJar::fromArray(
-                    $cookies,
-                    $this->env()->domain
-                );
-            }
+        $token = $this->jwtToken($request) ?? $request->bearerToken();
+        
+        if (!empty($token)) {
+            $data['headers']['Authorization'] = str_contains('Bearer', $token) ? $token : "Bearer {$token}";
         }
 
         return $data;

@@ -3,15 +3,11 @@
 namespace Elyerr\Passport\Connect\Controllers;
 
 use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Models\PassportConnect;
-use Elyerr\Passport\Connect\Traits\Config;
 use Elyerr\Passport\Connect\Traits\Credentials;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\Response;
-use view;
 
 class CodeController extends Controller
 {
@@ -42,16 +38,6 @@ class CodeController extends Controller
      */
     public function redirect(Request $request)
     {
-
-        if ($this->env()->module) {
-            $query = http_build_query([
-                'redirect_to' => "{$this->env()->host}/{$this->env()->redirect_after_login}",
-                'module' => true
-            ]);
-
-            return redirect("{$this->env()->server}/login?{$query}");
-        }
-
         $request->session()->put('state', $state = Str::random(40));
 
         $request->session()->put(
@@ -73,8 +59,7 @@ class CodeController extends Controller
             'state' => $state,
             'code_challenge' => $codeChallenge,
             'code_challenge_method' => 'S256',
-            'prompt' => $this->env()->prompt_mode,
-            'scope' => $this->env()->scopes,
+            'prompt' => $this->env()->prompt_mode
         ]);
 
         return redirect($this->env()->server . '/oauth/authorize?' . $query);
