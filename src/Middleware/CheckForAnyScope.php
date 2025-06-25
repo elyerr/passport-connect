@@ -3,49 +3,72 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
-use GuzzleHttp\Exception\ServerException;
+use Exception;
+use Elyerr\Passport\Connect\Http\Client;
+use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Exception\RequestException;
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Credentials;
+use Elyerr\Passport\Connect\Support\Response;
 
 class CheckForAnyScope
 {
-    use Credentials;
-    /**
-     * Checking credentials and any scopes 
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
-     * @param mixed ...$scopes
-     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
-     * @return mixed
-     */
-    public function handle(Request $request, Closure $next, ...$scopes)
-    {
-        $credentials = $this->credentials($request);
-        $credentials['headers']['X-SCOPES'] = implode(',', $scopes);
-        try {
-            $response = $this->client()
-                ->request('GET', $this->env()->server . '/api/gateway/check-scope', $credentials);
+    use Config;
 
-            if ($response->getStatusCode() == 200) {
-                return $next($request);
+    /**
+     * Client HTTP
+     * @var Client
+     */
+    public $client;
+
+    /**
+     * Host oauth2 passport server
+     * @var 
+     */
+    public $uri;
+
+    /**
+     * Construct
+     * @param \Elyerr\Passport\Connect\Http\Client $client
+     */
+    public function __construct(Client $client)
+    {
+        $this->client = $client;
+        $this->uri = 'api/gateway/check-scope';
+    }
+
+    /**
+     * Validation scopes
+     * @param mixed $request
+     * @param \Closure $next
+     * @param array $scopes
+     * @throws \Exception
+     */
+    public function handle($request, Closure $next, ...$scopes)
+    {
+        $headers['X-SCOPES'] = implode(',', $scopes);
+        $this->client->addHeaders($headers);
+
+        try {
+            $response = $this->client->get($this->uri);
+
+            if ($response->status != 200) {
+
+                if ($response->status == 403) {
+                    return Response::json([
+                        "message" => "Unauthorized access."
+                    ], $response->status);
+                }
+
+                return Response::json([
+                    "message" => "Authentication is failed."
+                ], $response->status);
             }
 
-            $this->report($response);
+            return $next ? $next($request) : true;
 
         } catch (RequestException $e) {
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
-            if ($statusCode === 401) {
-                throw new ReportError(__("Unauthorized access. Authentication failed."), 401);
-            }
-
-            if (!$this->isProduction()) {
-                throw new ReportError("Request error: " . $e->getMessage(), $statusCode ?? 500);
-            }
+            throw new Exception($e->getMessage(), $statusCode);
         }
-
-        throw new ReportError(__("Unauthorized access. Authentication is required."), 401);
     }
 }

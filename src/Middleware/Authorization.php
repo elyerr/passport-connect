@@ -3,48 +3,63 @@
 namespace Elyerr\Passport\Connect\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
-use GuzzleHttp\Exception\ServerException;
+use Elyerr\Passport\Connect\Support\Response;
+use Exception;
+use Elyerr\Passport\Connect\Http\Client;
+use Elyerr\Passport\Connect\Http\Request;
+use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Exception\RequestException;
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Credentials;
 
 class Authorization
 {
-    use Credentials;
+    use Config;
 
     /**
-     * Basic authentication 
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
-     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
+     * Client HTTP
+     * @var Client
      */
-    public function handle(Request $request, Closure $next)
+    public $client;
+
+    /**
+     * Host oauth2 passport server
+     * @var 
+     */
+    public $uri;
+
+    /**
+     * Construct
+     * @param \Elyerr\Passport\Connect\Http\Client $client
+     */
+    public function __construct(Client $client)
     {
-        $credentials = $this->credentials($request);
+        $this->client = $client;
+        $this->uri = 'api/gateway/check-authentication';
+    }
 
+    /**
+     * Verify basic authentication
+     * @param  mixed $request
+     * @param \Closure|null $next
+     * @throws \Exception
+     */
+    public function handle($request, Closure $next = null)
+    {
         try {
-            $response = $this->client()
-                ->request('GET', $this->env()->server . '/api/gateway/check-authentication', $credentials);
+            $response = $this->client->get($this->uri);
 
-            $this->report($response);
+            if ($response->status != 200) {
 
-            if ($response->getStatusCode() == 200) {
-                return $next($request);
+                return Response::json([
+                    "message" => "Authentication is failed."
+                ], $response->status);
             }
+
+            return $next ? $next($request) : true;
+
         } catch (RequestException $e) {
             $statusCode = $e->getResponse() ? $e->getResponse()->getStatusCode() : null;
 
-            if ($statusCode === 401) {
-                throw new ReportError(__("Unauthorized access. Authentication failed."), 401);
-            }
-
-            if (!$this->isProduction()) {
-                throw new ReportError("Request error: " . $e->getMessage(), $statusCode ?? 500);
-            }
+            throw new Exception($e->getMessage(), $statusCode);
         }
-
-        throw new ReportError(__("Unauthorized access. Authentication is required."), 401);
     }
-
 }

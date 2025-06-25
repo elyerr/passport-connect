@@ -5,19 +5,21 @@ namespace Elyerr\Passport\Connect\Traits;
 use ErrorException;
 
 trait Config
-{   
+{
     /**
-     * Set de conf file
-     * @return mixed
+     * Load the configuration file in both Laravel and PHP environments.
+     * @throws \RuntimeException
+     * @return object
      */
-    public function env()
+    public function env(): object
     {
+        $path = __DIR__ . '/../../config/config.php';
+
         try {
-            return json_decode(json_encode(require base_path('config/passport_connect.php')));
-            
+            $config = require $path;
+            return json_decode(json_encode($config));
         } catch (ErrorException $e) {
-            
-            return json_decode(json_encode(require __DIR__ . "/../../config/config.php"));
+            throw new \RuntimeException("Cannot load the configuration file: {$path}");
         }
     }
 }

@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Support\Str;
-
 return [
 
+    'environment' => env('APP_ENV'),
     /**
      * OAuth2 Server URL
      */
@@ -13,7 +12,6 @@ return [
      * Client ID generated on the OAUTH 2 Server
      */
     'server_id' => env('PASSPORT_SERVER_ID') ?: null,
-
 
     /**
      * Host

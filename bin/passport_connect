@@ -1,0 +1,21 @@
+#!/usr/bin/env php
+<?php
+
+$source = __DIR__ . '/../config/config.php';
+$target = getcwd() . '/config/passport_connect.php';
+
+if (!file_exists($source)) {
+    echo "No config.php found.\n";
+    exit(1);
+}
+
+if (!is_dir(dirname($target))) {
+    mkdir(dirname($target), 0777, true);
+}
+
+if (copy($source, $target)) {
+    echo "Config published to {$target}\n";
+} else {
+    echo "Failed to publish config.\n";
+    exit(1);
+}

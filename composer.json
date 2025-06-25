@@ -1,15 +1,8 @@
 {
   "name": "elyerr/passport-connect",
-  "description": "Easily connect microservices through an OAuth2 Passport server.",
+  "description": "OAuth2 Passport server SDK",
   "type": "library",
   "license": "GPL-3.0",
-  "extra": {
-    "laravel": {
-      "providers": [
-        "Elyerr\\Passport\\Connect\\ServiceProvider"
-      ]
-    }
-  },
   "autoload": {
     "psr-4": {
       "Elyerr\\Passport\\Connect\\": "src/"
@@ -21,12 +14,13 @@
       "email": "yerel9212@yahoo.es"
     }
   ],
+  "bin": [
+    "bin/passport_connect"
+  ],
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require": {
-    "guzzlehttp/guzzle": "^7.8"
-  },
-  "require-dev": {
-    "laravel/framework": "^10.38"
+    "guzzlehttp/guzzle": "^7.0",
+    "symfony/http-foundation": "^6.0 || ^7.0"
   }
 }

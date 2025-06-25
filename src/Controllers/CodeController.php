@@ -2,54 +2,65 @@
 
 namespace Elyerr\Passport\Connect\Controllers;
 
-use Elyerr\ApiResponse\Exceptions\ReportError;
-use Elyerr\Passport\Connect\Traits\Credentials;
-use GuzzleHttp\Exception\ClientException;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Str;
+use Exception;
+use Elyerr\Passport\Connect\Http\Client;
+use Elyerr\Passport\Connect\Http\Request;
+use Elyerr\Passport\Connect\Traits\Config;
+use Elyerr\Passport\Connect\Support\CookieManager;
+use Symfony\Component\HttpFoundation\Session\Session;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
 
-class CodeController extends Controller
+
+class CodeController
 {
-    use Credentials;
+
+    use Config;
+
+    /**
+     * Session
+     * @var 
+     */
+    protected $session;
+
+    /**
+     * Client HTTP
+     * @var Client
+     */
+    protected $client;
+
 
     /**
      * Constructor
      * 
      */
-    public function __construct()
+    public function __construct(Client $client)
     {
-        $this->middleware('guest');
-    }
+        $this->client = $client;
 
-    /**
-     * Show the login view
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
-     */
-    public function login()
-    {
-        return view(view: 'auth');
+        $this->session = new Session(
+            new NativeSessionStorage(
+                [
+                    'name' => $this->env()->jwt_token,
+                    'cookie_domain' => $this->env()->cookie->domain,
+                ]
+            )
+        );
     }
 
     /**
      * Make redirect action to generate a code response
-     * @param \Illuminate\Http\Request $request
+     * @param \Elyerr\Passport\Connect\Http\Request $request
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function redirect(Request $request)
     {
-        $request->session()->put('state', $state = Str::random(40));
+        $state = bin2hex(random_bytes(20));
+        $verifier = bin2hex(random_bytes(64));
+        $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
 
-        $request->session()->put(
-            'code_verifier',
-            $code_verifier = Str::random(128)
-        );
-
-        $codeChallenge = strtr(rtrim(
-            base64_encode(hash('sha256', $code_verifier, true))
-            ,
-            '='
-        ), '+/', '-_');
+        $this->session->set('state', $state);
+        $this->session->set('verifier', $verifier);
 
         //Query options to generate a code 
         $query = http_build_query([
@@ -57,51 +68,57 @@ class CodeController extends Controller
             'redirect_uri' => $this->env()->host . '/callback',
             'response_type' => 'code',
             'state' => $state,
-            'code_challenge' => $codeChallenge,
+            'code_challenge' => $challenge,
             'code_challenge_method' => 'S256',
             'prompt' => $this->env()->prompt_mode
         ]);
 
-        return redirect($this->env()->server . '/oauth/authorize?' . $query);
+        return new RedirectResponse($this->env()->server . '/oauth/authorize?' . $query);
     }
 
     /**
      * Make a requests to the oauth 2 server using the code to generate valid credentials
-     * @param \Illuminate\Http\Request $request
-     * @throws \Elyerr\ApiResponse\Exceptions\ReportError
-     * @return \Illuminate\Http\RedirectResponse
+     * @param \Elyerr\Passport\Connect\Http\Request $request
+     * @throws \Exception
+     * @return RedirectResponse
      */
     public function callback(Request $request)
     {
-        $state = $request->session()->pull('state');
+        $state = $this->session->get('state');
+        $verifier = $this->session->get('verifier');
 
-        $codeVerifier = $request->session()->pull('code_verifier');
-
-        throw_unless(
-            strlen($state) > 0 && $state === $request->state,
-            new ReportError("Can't find the session", 404)
-        );
-
-        try {
-
-            $response = $this->client()
-                ->post($this->env()->server . '/api/oauth/token', [
-                    'form_params' => [
-                        'grant_type' => 'authorization_code',
-                        'client_id' => $this->env()->server_id,
-                        'redirect_uri' => $this->env()->host . '/callback',
-                        'code_verifier' => $codeVerifier,
-                        'code' => $request->code,
-                    ],
-                ]);
-        } catch (ClientException $e) {
-            throw new ReportError(__('Unauthenticated'), 401);
+        if ($state !== $request->input('state')) {
+            throw new Exception("Invalid state.");
         }
 
-        $jwtToken = $this->generateCredentials($response);
+        try {
+            $uri = $this->env()->server . '/api/oauth/token';
 
-        $redirect_to = "{$this->env()->host}/{$this->env()->redirect_after_login}";
+            $response = $this->client->post($uri, [
+                'grant_type' => 'authorization_code',
+                'client_id' => $this->env()->server_id,
+                'redirect_uri' => $this->env()->host . '/callback',
+                'code_verifier' => $verifier,
+                'code' => $request->input('code'),
+            ]);
 
-        return redirect($redirect_to)->withCookie($jwtToken);
+            $redirect_to = "{$this->env()->host}/{$this->env()->redirect_after_login}";
+
+            $token = CookieManager::make(
+                $this->env()->jwt_token,
+                $response->data->access_token,
+                $this->env()->cookie->domain,
+                $response->data->expires_in
+            );
+
+            $redirect = new RedirectResponse($redirect_to);
+            $redirect->headers->setCookie($token);
+
+            return $redirect;
+
+
+        } catch (Exception $e) {
+            throw new Exception(__('Unauthenticated'), 401);
+        }
     }
 }
