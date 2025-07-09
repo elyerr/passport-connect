@@ -8,6 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 use Elyerr\Passport\Connect\Http\Request;
 use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Exception\RequestException;
+use Elyerr\Passport\Connect\Http\SessionManager;
 
 class Client
 {
@@ -28,13 +29,17 @@ class Client
         'Connection' => 'keep-alive',
     ];
 
+    private $session;
+
     /**
      * Constructor
      * 
      * @param array $headers
      */
-    public function __construct(array $headers = [])
+    public function __construct(SessionManager $sessionManager, array $headers = [])
     {
+        $this->session = $sessionManager;
+
         //Add authorization header
         $this->headers['Authorization'] = $this->loadCredentials();
 
@@ -171,8 +176,8 @@ class Client
 
         $token = $request->header('Authorization');
 
-        if (!empty($token)) {
-            $token = $request->cookie($this->env()->jwt_token);
+        if (empty($token)) {
+            $token = $this->session->get('access_token');
         }
 
         if (!str_starts_with($token, 'Bearer ')) {

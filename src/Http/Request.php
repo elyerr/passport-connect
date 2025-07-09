@@ -138,4 +138,13 @@ class Request
     {
         return $this->request->cookies->get($key, $default);
     }
+
+    /**
+     * Get session
+     * @return \Symfony\Component\HttpFoundation\Session\SessionInterface
+     */
+    public function getSession()
+    {
+        return $this->request->getSession();
+    }
 }

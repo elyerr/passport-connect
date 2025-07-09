@@ -4,17 +4,29 @@ namespace Elyerr\Passport\Connect\Services;
 use Exception;
 use Elyerr\Passport\Connect\Http\Client;
 use Elyerr\Passport\Connect\Http\Request;
+use Elyerr\Passport\Connect\Traits\Config;
 use Elyerr\Passport\Connect\Support\Response;
+use Elyerr\Passport\Connect\Http\SessionManager;
+use Elyerr\Passport\Connect\Support\CookieManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class Passport
 {
+    use Config;
 
     /**
      * Client HTTP
      * @var Client
      */
     private $client;
+
+
+    /**
+     * Session manager
+     * @var SessionManager
+     */
+    private $session;
 
 
     /**
