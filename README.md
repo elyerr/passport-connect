@@ -18,10 +18,10 @@ vendor/bin/passport_connect
 
 ```env
 PASSPORT_SERVER=https://auth.elyerr.xyz               # OAuth2 Passport server URL
-PASSPORT_SERVER_ID=9f3a03df-df61-4d65-a850-5b53240f1b4a  # OAuth2 client ID
+PASSPORT_CLIENT_ID=9f3a03df-df61-4d65-a850-5b53240f1b4a  # OAuth2 client ID
 PASSPORT_REDIRECT_TO=/user/account                    # Redirect route after successful login
 PASSPORT_LOGIN_TO=login                               # Local route for unauthenticated users
-PASSPORT_PROMPT_MODE=none                             # Prompt modes: none | consent | login
+PASSPORT_PROMPT_MODE=none                             # Prompt modes: none | consent | login | internal
 PASSPORT_DOMAIN_SERVER=app.domain.com                 # Cookie domain
 PASSPORT_TOKEN_NAME=passport_server                   # Name of the auth cookie
 PASSPORT_SECURE_COOKIE=true                           # Only allow cookie over HTTPS
