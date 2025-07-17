@@ -6,7 +6,6 @@ use Closure;
 use Elyerr\Passport\Connect\Support\Response;
 use Exception;
 use Elyerr\Passport\Connect\Http\Client;
-use Elyerr\Passport\Connect\Http\Request;
 use Elyerr\Passport\Connect\Traits\Config;
 use GuzzleHttp\Exception\RequestException;
 
@@ -48,6 +47,12 @@ class Authorization
             $response = $this->client->get($this->uri);
 
             if ($response->status != 200) {
+
+                if ($response->status == 403) {
+                    return Response::json([
+                        "message" => "Unauthorized access."
+                    ], $response->status);
+                }
 
                 return Response::json([
                     "message" => "Authentication is failed."
