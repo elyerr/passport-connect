@@ -38,12 +38,12 @@ class CheckScopes
 
     /**
      * Checking credential and all scopes for the user
-     * @param \Elyerr\Passport\Connect\Http\Request $request
+     * @param mixed $request
      * @param \Closure $next
      * @param array $scopes
      * @throws \Exception
      */
-    public function handle(Request $request, Closure $next, ...$scopes)
+    public function handle($request, Closure $next, ...$scopes)
     {
         $headers['X-SCOPES'] = implode(',', $scopes);
         $this->client->addHeaders($headers);
